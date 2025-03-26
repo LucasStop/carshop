@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Head from "next/head";
 import styles from "./clientes.module.css";
-import Layout from "../../components/Layout";
+import Layout from "../../components/layout";
 
 export default function Clientes() {
   const [email, setEmail] = useState("");

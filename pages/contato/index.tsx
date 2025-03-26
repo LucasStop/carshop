@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Head from "next/head";
 import styles from "./contato.module.css";
-import Layout from "../../components/Layout";
+import Layout from "../../components/layout";
 
 export default function Contato() {
   const [formData, setFormData] = useState({

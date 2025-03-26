@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import styles from "./carros.module.css";
-import Layout from "../../components/Layout";
+import Layout from "../../components/layout";
 import CardCarro from "../../components/cardCarro";
 
 // Dados de exemplo (em um projeto real, viriam de uma API)

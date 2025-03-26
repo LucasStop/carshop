@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import styles from '../styles/Carousel.module.css';
+import styles from './carousel.module.css';
 
 interface Slide {
   id: number;

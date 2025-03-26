@@ -1,7 +1,7 @@
 import React from "react";
 import Head from "next/head";
 import styles from "./marcas.module.css";
-import Layout from "../../components/Layout";
+import Layout from "../../components/layout";
 
 // Dados de exemplo
 const marcas = [

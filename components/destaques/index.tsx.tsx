@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from '../styles/Destaques.module.css';
+import styles from './destaques.module.css';
 import CardCarro from '../cardCarro';
 
 const carrosDestaque = [

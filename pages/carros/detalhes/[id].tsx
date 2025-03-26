@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import Link from "next/link";
-import Layout from "../../../components/Layout";
-import styles from "../../styles/CarroDetalhe.module.css";
+import Layout from "../../../components/layout";
+import styles from "./carroDetalhe.module.css";
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 import { FaGasPump, FaCar, FaCalendarAlt } from "react-icons/fa";
 
