@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
+import { AuthService, ApiError } from "@/services"
 
 const loginSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -23,7 +24,7 @@ type LoginFormData = z.infer<typeof loginSchema>
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-
+  const [error, setError] = useState<string>("")
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -34,18 +35,18 @@ export function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true)
+    setError("")
     
     try {
-      // Aqui você implementará a lógica de autenticação
-      console.log("Login data:", data)
-      
-      // Simulação de API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const result = await AuthService.login(data)
+      console.log("Login bem-sucedido:", result)
       
       // Redirecionar após login bem-sucedido
-      // router.push("/")
+      window.location.href = "/"
     } catch (error) {
       console.error("Erro no login:", error)
+      const apiError = error as ApiError
+      setError(apiError.message || "Erro ao fazer login. Tente novamente.")
     } finally {
       setIsLoading(false)
     }
@@ -61,8 +62,12 @@ export function LoginForm() {
         <CardDescription>
           Entre na sua conta para continuar
         </CardDescription>
-      </CardHeader>
-      <CardContent>
+      </CardHeader>      <CardContent>
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
