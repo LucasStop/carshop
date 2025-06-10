@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useForm, Controller } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import { Car, Eye, EyeOff } from "lucide-react";
+import { IMaskInput } from "react-imask";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,54 +22,149 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PasswordStrength } from "@/components/password-strength";
+import { FormValidationSummary } from "@/components/form-validation-summary";
+import {
+  ValidationIndicator,
+  useValidationStatus,
+  validators,
+  getValidationMessage,
+} from "@/components/validation-indicator";
 import { AuthService, ApiError, UtilsService } from "@/services";
 
-const registerSchema = z
-  .object({
-    role_id: z.number().default(1),
-    name: z.string().min(2, "O nome deve ter pelo menos 2 caracteres"),
-    email: z.string().email("Email inválido"),
-    password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres"),
-    password_confirmation: z.string(),
-    phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos"),
-    cpf: z
-      .string()
-      .min(11, "CPF deve ter 11 dígitos")
-      .max(14, "CPF inválido")
-      .refine((cpf) => {
-        return UtilsService.validateCPF(cpf);
-      }, "CPF inválido"),
-    rg: z.string().min(7, "RG deve ter pelo menos 7 caracteres"),
-    birth_date: z.string().min(1, "Data de nascimento é obrigatória"),
-    address: z.object({
-      address: z.string().min(1, "Endereço é obrigatório"),
-      number: z.string().min(1, "Número é obrigatório"),
-      complement: z.string().optional(),
-      city: z.string().min(1, "Cidade é obrigatória"),
-      state: z
-        .string()
-        .min(2, "Estado é obrigatório")
-        .max(2, "Use a sigla do estado"),
-      zip_code: z
-        .string()
-        .min(8, "CEP deve ter 8 dígitos")
-        .max(9, "CEP inválido"),
-    }),
-    agreeToTerms: z.boolean().refine((val) => val === true, {
-      message: "Você deve aceitar os termos e condições",
-    }),
-  })
-  .refine((data) => data.password === data.password_confirmation, {
-    message: "As senhas não coincidem",
-    path: ["password_confirmation"],
-  });
+// Schema de validação simplificado com Yup
+const registerSchema = yup.object({
+  role_id: yup.number().default(1),
 
-type RegisterFormData = z.infer<typeof registerSchema>;
+  name: yup
+    .string()
+    .required()
+    .min(2)
+    .max(100)
+    .matches(/^[a-zA-ZÀ-ÿ\s]+$/)
+    .test("full-name", (value) => {
+      if (!value) return false;
+      const names = value.trim().split(" ");
+      return names.length >= 2 && names.every((name) => name.length >= 2);
+    }),
+
+  email: yup.string().required().email().max(255).lowercase(),
+
+  password: yup
+    .string()
+    .required()
+    .min(6)
+    .max(128)
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/),
+
+  password_confirmation: yup
+    .string()
+    .required()
+    .oneOf([yup.ref("password")]),
+
+  phone: yup
+    .string()
+    .required()
+    .min(10)
+    .max(15)
+    .test("phone-format", (value) => {
+      if (!value) return false;
+      const digits = value.replace(/\D/g, "");
+      return digits.length >= 10 && digits.length <= 11;
+    }),
+
+  cpf: yup
+    .string()
+    .required()
+    .test("cpf-length", (value) => {
+      if (!value) return false;
+      const digits = value.replace(/\D/g, "");
+      return digits.length === 11;
+    })
+    .test("cpf-valid", (value) => {
+      if (!value) return false;
+
+      // Verificar se o serviço de validação existe
+      if (typeof UtilsService?.validateCPF === "function") {
+        return UtilsService.validateCPF(value);
+      }
+
+      // Validação básica alternativa se o serviço não existir
+      const digits = value.replace(/\D/g, "");
+      return digits.length === 11 && !/^(.)\1+$/.test(digits);
+    }),
+
+  rg: yup
+    .string()
+    .required()
+    .min(7)
+    .max(20)
+    .matches(/^[0-9X.-]+$/i),
+
+  birth_date: yup
+    .string()
+    .required()
+    .test("valid-date", (value) => {
+      if (!value) return false;
+      const birthDate = new Date(value);
+      const today = new Date();
+
+      // Verificar se a data é válida
+      if (isNaN(birthDate.getTime())) return false;
+
+      // Calcular idade
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+
+      if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && today.getDate() < birthDate.getDate())
+      ) {
+        age--;
+      }
+
+      return age >= 18 && age <= 120;
+    }),
+
+  address: yup.object({
+    address: yup.string().required().min(5).max(255),
+
+    number: yup.string().required().max(10),
+
+    complement: yup.string().max(100).optional(),
+
+    city: yup
+      .string()
+      .required()
+      .min(2)
+      .max(100)
+      .matches(/^[a-zA-ZÀ-ÿ\s.-]+$/),
+
+    state: yup
+      .string()
+      .required()
+      .length(2)
+      .uppercase()
+      .matches(/^[A-Z]{2}$/),
+
+    zip_code: yup
+      .string()
+      .required()
+      .test("cep-format", (value) => {
+        if (!value) return false;
+        const digits = value.replace(/\D/g, "");
+        return digits.length === 8;
+      }),
+  }),
+
+  agreeToTerms: yup.boolean().required().oneOf([true]),
+});
+
+type RegisterFormData = yup.InferType<typeof registerSchema>;
 
 export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -76,9 +172,10 @@ export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
   const [error, setError] = useState<string>("");
-
   const form = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
+    resolver: yupResolver(registerSchema),
+    mode: "onChange",
+    reValidateMode: "onChange",
     defaultValues: {
       role_id: 1,
       name: "",
@@ -157,12 +254,14 @@ export function RegisterForm() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            {" "}
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
                 {error}
               </div>
-            )}
-
+            )}{" "}
+            {/* Resumo de Validação */}
+            {/* <FormValidationSummary control={form.control} /> */}
             {/* Layout de duas colunas para Dados Pessoais e Endereço */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Coluna 1: Dados Pessoais */}
@@ -172,8 +271,7 @@ export function RegisterForm() {
                     Dados Pessoais
                   </h3>
                   <div className="flex-1 h-px bg-gray-200"></div>
-                </div>
-
+                </div>{" "}
                 <FormField
                   control={form.control}
                   name="name"
@@ -181,16 +279,54 @@ export function RegisterForm() {
                     <FormItem>
                       <FormLabel>Nome completo *</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Digite seu nome completo"
-                          {...field}
-                        />
+                        <div className="relative">
+                          <Input
+                            placeholder="Digite seu nome completo"
+                            {...field}
+                          />
+                          {field.value && field.value.length > 0 && (
+                            <ValidationIndicator
+                              status={useValidationStatus(
+                                field.value,
+                                validators.fullName,
+                                2
+                              )}
+                            />
+                          )}
+                        </div>
                       </FormControl>
-                      <FormMessage />
+                      {field.value && field.value.length > 0 && (
+                        <p
+                          className={`text-xs mt-1 ${
+                            useValidationStatus(
+                              field.value,
+                              validators.fullName,
+                              2
+                            ) === "valid"
+                              ? "text-green-600"
+                              : useValidationStatus(
+                                  field.value,
+                                  validators.fullName,
+                                  2
+                                ) === "pending"
+                              ? "text-gray-500"
+                              : "text-red-600"
+                          }`}
+                        >
+                          {getValidationMessage(
+                            "fullName",
+                            field.value,
+                            useValidationStatus(
+                              field.value,
+                              validators.fullName,
+                              2
+                            )
+                          )}
+                        </p>
+                      )}
                     </FormItem>
                   )}
-                />
-
+                />{" "}
                 <FormField
                   control={form.control}
                   name="email"
@@ -198,18 +334,70 @@ export function RegisterForm() {
                     <FormItem>
                       <FormLabel>Email *</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="seu.email@exemplo.com"
-                          type="email"
-                          {...field}
-                        />
+                        <div className="relative">
+                          <Input
+                            placeholder="seu.email@exemplo.com"
+                            type="email"
+                            {...field}
+                            onChange={(e) => {
+                              field.onChange(e.target.value.toLowerCase());
+                            }}
+                          />
+                          {field.value &&
+                            field.value.length > 0 &&
+                            (field.value.includes("@") ? (
+                              <ValidationIndicator
+                                status={useValidationStatus(
+                                  field.value,
+                                  validators.email,
+                                  3
+                                )}
+                              />
+                            ) : (
+                              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                <span className="text-orange-500 text-sm">
+                                  @
+                                </span>
+                              </div>
+                            ))}
+                        </div>
                       </FormControl>
-                      <FormMessage />
+                      {field.value && field.value.length > 0 && (
+                        <p
+                          className={`text-xs mt-1 ${
+                            useValidationStatus(
+                              field.value,
+                              validators.email,
+                              3
+                            ) === "valid"
+                              ? "text-green-600"
+                              : useValidationStatus(
+                                  field.value,
+                                  validators.email,
+                                  3
+                                ) === "pending"
+                              ? "text-gray-500"
+                              : !field.value.includes("@")
+                              ? "text-orange-600"
+                              : "text-red-600"
+                          }`}
+                        >
+                          {getValidationMessage(
+                            "email",
+                            field.value,
+                            useValidationStatus(
+                              field.value,
+                              validators.email,
+                              3
+                            )
+                          )}
+                        </p>
+                      )}
                     </FormItem>
                   )}
                 />
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {" "}
                   <FormField
                     control={form.control}
                     name="phone"
@@ -217,22 +405,69 @@ export function RegisterForm() {
                       <FormItem>
                         <FormLabel>Telefone *</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="(11) 99999-9999"
-                            {...field}
-                            onChange={(e) => {
-                              const formatted = UtilsService.formatPhone(
-                                e.target.value
-                              );
-                              field.onChange(formatted);
-                            }}
-                          />
+                          <div className="relative">
+                            <Controller
+                              name="phone"
+                              control={form.control}
+                              render={({
+                                field: { onChange, onBlur, value, ref },
+                              }) => (
+                                <IMaskInput
+                                  mask="(00) 00000-0000"
+                                  value={value || ""}
+                                  onAccept={(currentValue) => {
+                                    onChange(currentValue);
+                                  }}
+                                  onBlur={onBlur}
+                                  inputRef={ref}
+                                  placeholder="(11) 99999-9999"
+                                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                />
+                              )}
+                            />
+                            {field.value && field.value.length > 0 && (
+                              <ValidationIndicator
+                                status={useValidationStatus(
+                                  field.value,
+                                  validators.phone,
+                                  8
+                                )}
+                              />
+                            )}
+                          </div>
                         </FormControl>
-                        <FormMessage />
+                        {field.value && field.value.length > 0 && (
+                          <p
+                            className={`text-xs mt-1 ${
+                              useValidationStatus(
+                                field.value,
+                                validators.phone,
+                                8
+                              ) === "valid"
+                                ? "text-green-600"
+                                : useValidationStatus(
+                                    field.value,
+                                    validators.phone,
+                                    8
+                                  ) === "pending"
+                                ? "text-gray-500"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {getValidationMessage(
+                              "phone",
+                              field.value,
+                              useValidationStatus(
+                                field.value,
+                                validators.phone,
+                                8
+                              )
+                            )}
+                          </p>
+                        )}
                       </FormItem>
                     )}
-                  />
-
+                  />{" "}
                   <FormField
                     control={form.control}
                     name="birth_date"
@@ -240,15 +475,62 @@ export function RegisterForm() {
                       <FormItem>
                         <FormLabel>Data de Nascimento *</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} />
+                          <div className="relative">
+                            <Input type="date" {...field} />
+                            {field.value && (
+                              <ValidationIndicator
+                                status={useValidationStatus(
+                                  field.value,
+                                  validators.birthDate
+                                )}
+                              />
+                            )}
+                          </div>
                         </FormControl>
-                        <FormMessage />
+                        {field.value &&
+                          (() => {
+                            const birthDate = new Date(field.value);
+                            const today = new Date();
+                            let age =
+                              today.getFullYear() - birthDate.getFullYear();
+                            const monthDiff =
+                              today.getMonth() - birthDate.getMonth();
+
+                            if (
+                              monthDiff < 0 ||
+                              (monthDiff === 0 &&
+                                today.getDate() < birthDate.getDate())
+                            ) {
+                              age--;
+                            }
+
+                            const status = useValidationStatus(
+                              field.value,
+                              validators.birthDate
+                            );
+                            return (
+                              <p
+                                className={`text-xs mt-1 ${
+                                  status === "valid"
+                                    ? "text-green-600"
+                                    : "text-red-600"
+                                }`}
+                              >
+                                {getValidationMessage(
+                                  "birthDate",
+                                  field.value,
+                                  status,
+                                  { age }
+                                )}
+                              </p>
+                            );
+                          })()}
                       </FormItem>
                     )}
                   />
                 </div>
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {" "}
                   <FormField
                     control={form.control}
                     name="cpf"
@@ -256,22 +538,80 @@ export function RegisterForm() {
                       <FormItem>
                         <FormLabel>CPF *</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="000.000.000-00"
-                            {...field}
-                            onChange={(e) => {
-                              const formatted = UtilsService.formatCPF(
-                                e.target.value
-                              );
-                              field.onChange(formatted);
-                            }}
-                          />
+                          <div className="relative">
+                            <Controller
+                              name="cpf"
+                              control={form.control}
+                              render={({
+                                field: { onChange, onBlur, value, ref },
+                              }) => (
+                                <IMaskInput
+                                  mask="000.000.000-00"
+                                  value={value || ""}
+                                  onAccept={(currentValue) => {
+                                    onChange(currentValue);
+                                  }}
+                                  onBlur={onBlur}
+                                  inputRef={ref}
+                                  placeholder="000.000.000-00"
+                                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                />
+                              )}
+                            />
+                            {field.value && field.value.length > 0 && (
+                              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                {(() => {
+                                  const digits = field.value.replace(/\D/g, "");
+                                  if (digits.length < 11) {
+                                    return (
+                                      <span className="text-gray-400 text-sm">
+                                        ○
+                                      </span>
+                                    );
+                                  }
+                                  return UtilsService.validateCPF(
+                                    field.value
+                                  ) ? (
+                                    <span className="text-green-600 text-sm">
+                                      ✓
+                                    </span>
+                                  ) : (
+                                    <span className="text-red-600 text-sm">
+                                      ✗
+                                    </span>
+                                  );
+                                })()}
+                              </div>
+                            )}
+                          </div>
                         </FormControl>
-                        <FormMessage />
+                        {field.value &&
+                          field.value.length > 0 &&
+                          (() => {
+                            const digits = field.value.replace(/\D/g, "");
+                            if (digits.length < 11) {
+                              return (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Digite os 11 dígitos do CPF
+                                </p>
+                              );
+                            } else if (UtilsService.validateCPF(field.value)) {
+                              return (
+                                <p className="text-xs text-green-600 mt-1">
+                                  CPF válido
+                                </p>
+                              );
+                            } else {
+                              return (
+                                <p className="text-xs text-red-600 mt-1">
+                                  CPF inválido
+                                </p>
+                              );
+                            }
+                          })()}
                       </FormItem>
                     )}
-                  />
-
+                  />{" "}
                   <FormField
                     control={form.control}
                     name="rg"
@@ -279,9 +619,72 @@ export function RegisterForm() {
                       <FormItem>
                         <FormLabel>RG *</FormLabel>
                         <FormControl>
-                          <Input placeholder="00.000.000-0" {...field} />
+                          <div className="relative">
+                            <Controller
+                              name="rg"
+                              control={form.control}
+                              render={({
+                                field: { onChange, onBlur, value, ref },
+                              }) => (
+                                <IMaskInput
+                                  mask="00.000.000-a"
+                                  definitions={{
+                                    a: /[0-9X]/,
+                                  }}
+                                  value={value || ""}
+                                  onAccept={(currentValue) => {
+                                    onChange(currentValue);
+                                  }}
+                                  onBlur={onBlur}
+                                  inputRef={ref}
+                                  placeholder="00.000.000-0"
+                                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                />
+                              )}
+                            />
+                            {field.value && field.value.length > 0 && (
+                              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                {field.value.length >= 7 &&
+                                /^[0-9X.-]+$/i.test(field.value) ? (
+                                  <span className="text-green-600 text-sm">
+                                    ✓
+                                  </span>
+                                ) : field.value.length < 7 ? (
+                                  <span className="text-gray-400 text-sm">
+                                    ○
+                                  </span>
+                                ) : (
+                                  <span className="text-red-600 text-sm">
+                                    ✗
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </FormControl>
-                        <FormMessage />
+                        {field.value &&
+                          field.value.length > 0 &&
+                          (() => {
+                            if (field.value.length < 7) {
+                              return (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  RG deve ter pelo menos 7 caracteres
+                                </p>
+                              );
+                            } else if (!/^[0-9X.-]+$/i.test(field.value)) {
+                              return (
+                                <p className="text-xs text-red-600 mt-1">
+                                  Use apenas números, pontos, hífens e X
+                                </p>
+                              );
+                            } else {
+                              return (
+                                <p className="text-xs text-green-600 mt-1">
+                                  RG válido
+                                </p>
+                              );
+                            }
+                          })()}
                       </FormItem>
                     )}
                   />
@@ -295,8 +698,7 @@ export function RegisterForm() {
                     Endereço
                   </h3>
                   <div className="flex-1 h-px bg-gray-200"></div>
-                </div>
-
+                </div>{" "}
                 <FormField
                   control={form.control}
                   name="address.zip_code"
@@ -305,32 +707,57 @@ export function RegisterForm() {
                       <FormLabel>CEP *</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Input
-                            placeholder="00000-000"
-                            {...field}
-                            onChange={(e) => {
-                              const formatted = UtilsService.formatCEP(
-                                e.target.value
-                              );
-                              field.onChange(formatted);
-                              handleCepChange(formatted);
-                            }}
+                          <Controller
+                            name="address.zip_code"
+                            control={form.control}
+                            render={({
+                              field: { onChange, onBlur, value, ref },
+                            }) => (
+                              <IMaskInput
+                                mask="00000-000"
+                                value={value || ""}
+                                onAccept={(currentValue) => {
+                                  onChange(currentValue);
+                                  handleCepChange(currentValue);
+                                }}
+                                onBlur={onBlur}
+                                inputRef={ref}
+                                placeholder="00000-000"
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                              />
+                            )}
                           />
-                          {isLoadingCep && (
+                          {isLoadingCep ? (
                             <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
                             </div>
+                          ) : (
+                            field.value &&
+                            field.value.length === 9 && (
+                              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                {(() => {
+                                  const digits = field.value.replace(/\D/g, "");
+                                  return digits.length === 8 ? (
+                                    <span className="text-green-600 text-sm">
+                                      ✓
+                                    </span>
+                                  ) : (
+                                    <span className="text-red-600 text-sm">
+                                      ✗
+                                    </span>
+                                  );
+                                })()}
+                              </div>
+                            )
                           )}
                         </div>
                       </FormControl>
-                      <span className="fixed -bottom-5 left-0 text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 mt-1">
                         O endereço será preenchido automaticamente
-                      </span>
-                      <FormMessage />
+                      </p>
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="address.address"
@@ -343,11 +770,9 @@ export function RegisterForm() {
                           {...field}
                         />
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
-
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -358,7 +783,6 @@ export function RegisterForm() {
                         <FormControl>
                           <Input placeholder="123" {...field} />
                         </FormControl>
-                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -377,12 +801,10 @@ export function RegisterForm() {
                             style={{ textTransform: "uppercase" }}
                           />
                         </FormControl>
-                        <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -393,7 +815,6 @@ export function RegisterForm() {
                         <FormControl>
                           <Input placeholder="Nome da cidade" {...field} />
                         </FormControl>
-                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -410,14 +831,12 @@ export function RegisterForm() {
                             {...field}
                           />
                         </FormControl>
-                        <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
               </div>
             </div>
-
             {/* Seção de Segurança - Separada embaixo */}
             <div className="space-y-6">
               <div className="flex items-center space-x-2">
@@ -428,6 +847,7 @@ export function RegisterForm() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {" "}
                 <FormField
                   control={form.control}
                   name="password"
@@ -456,11 +876,12 @@ export function RegisterForm() {
                           </Button>
                         </div>
                       </FormControl>
-                      <FormMessage />
+                      <div className="mt-2">
+                        <PasswordStrength password={field.value || ""} />
+                      </div>
                     </FormItem>
                   )}
-                />
-
+                />{" "}
                 <FormField
                   control={form.control}
                   name="password_confirmation"
@@ -489,15 +910,53 @@ export function RegisterForm() {
                               <Eye className="h-4 w-4" />
                             )}
                           </Button>
+                          {field.value && field.value.length > 0 && (
+                            <div className="absolute right-12 top-1/2 transform -translate-y-1/2">
+                              {(() => {
+                                const password = form.getValues("password");
+                                return field.value === password ? (
+                                  <span className="text-green-600 text-sm">
+                                    ✓
+                                  </span>
+                                ) : (
+                                  <span className="text-red-600 text-sm">
+                                    ✗
+                                  </span>
+                                );
+                              })()}
+                            </div>
+                          )}
                         </div>
                       </FormControl>
-                      <FormMessage />
+                      {field.value &&
+                        (() => {
+                          const password = form.getValues("password");
+                          if (
+                            field.value !== password &&
+                            field.value.length > 0
+                          ) {
+                            return (
+                              <p className="text-xs text-red-600 mt-1">
+                                As senhas não coincidem
+                              </p>
+                            );
+                          } else if (
+                            field.value === password &&
+                            field.value.length > 0
+                          ) {
+                            return (
+                              <p className="text-xs text-green-600 mt-1">
+                                Senhas coincidem
+                              </p>
+                            );
+                          }
+                          return null;
+                        })()}
                     </FormItem>
                   )}
                 />
               </div>
             </div>
-
             {/* Termos e Botão de Submit */}
             <div className="space-y-6">
               <FormField
@@ -528,7 +987,6 @@ export function RegisterForm() {
                           política de privacidade
                         </Link>
                       </FormLabel>
-                      <FormMessage />
                     </div>
                   </FormItem>
                 )}
