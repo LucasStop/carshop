@@ -29,8 +29,7 @@ export function LoginForm() {
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
-      password: "",
-    },
+      password: "",    },
   })
 
   const onSubmit = async (data: LoginFormData) => {
@@ -38,15 +37,58 @@ export function LoginForm() {
     setError("")
     
     try {
+      // Testar localStorage antes do login
+      AuthService.testLocalStorage()
+      
       const result = await AuthService.login(data)
       console.log("Login bem-sucedido:", result)
       
-      // Redirecionar após login bem-sucedido
-      window.location.href = "/"
+      // Verificar se o token foi salvo no localStorage
+      const savedToken = localStorage.getItem('auth_token')
+      if (savedToken) {
+        console.log("✅ Token salvo no localStorage com sucesso")
+        console.log("Token info:", {
+          length: savedToken.length,
+          starts_with: savedToken.substring(0, 20) + "...",
+          key_used: 'auth_token'
+        })
+      } else {
+        console.warn("❌ Token não foi salvo no localStorage")
+      }
+      
+      // Verificar se o usuário foi salvo
+      const savedUser = localStorage.getItem('user')
+      if (savedUser) {
+        console.log("✅ Usuário salvo no localStorage com sucesso")
+        try {
+          const user = JSON.parse(savedUser)
+          console.log("Usuário:", { id: user.id, name: user.name, email: user.email })
+        } catch (e) {
+          console.warn("❌ Erro ao parsear dados do usuário:", e)
+        }
+      }
+      
+      // Verificar se o usuário está autenticado
+      if (AuthService.isAuthenticated()) {
+        console.log("✅ Usuário autenticado com sucesso")
+        
+        // Debug completo do localStorage
+        AuthService.debugLocalStorage()
+        
+        // Redirecionar após login bem-sucedido
+        console.log("🔄 Redirecionando para a página inicial...")
+        window.location.href = "/"
+      } else {
+        throw new Error("Falha na autenticação após login")
+      }
     } catch (error) {
-      console.error("Erro no login:", error)
+      console.error("❌ Erro no login:", error)
       const apiError = error as ApiError
       setError(apiError.message || "Erro ao fazer login. Tente novamente.")
+      
+      // Debug em caso de erro
+      console.log("🔍 Debug após erro:")
+      AuthService.debugLocalStorage()
     } finally {
       setIsLoading(false)
     }

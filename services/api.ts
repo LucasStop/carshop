@@ -1,9 +1,12 @@
 import { ApiError } from './types';
 
 export class ApiService {
-  private static baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://phpstack-1213963-5391708.cloudwaysapps.com/api';
+  private static baseURL = process.env.NEXT_PUBLIC_API_URL;
 
   static getBaseURL(): string {
+    if (!this.baseURL) {
+      throw new Error('Base URL da API não definida. Verifique a variável de ambiente NEXT_PUBLIC_API_URL.');
+    }
     return this.baseURL;
   }
 
@@ -77,7 +80,6 @@ export class ApiService {
       body: data ? JSON.stringify(data) : undefined,
     });
   }
-
   static async delete<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, { method: 'DELETE' });
   }
@@ -86,12 +88,16 @@ export class ApiService {
   static setAuthToken(token: string): void {
     if (typeof window !== 'undefined') {
       localStorage.setItem('auth_token', token);
+      console.log('Token salvo no localStorage com chave "auth_token"');
+    } else {
+      console.warn('localStorage não disponível (SSR)');
     }
   }
 
   static getAuthToken(): string | null {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('auth_token');
+      const token = localStorage.getItem('auth_token');
+      return token;
     }
     return null;
   }
@@ -99,6 +105,7 @@ export class ApiService {
   static removeAuthToken(): void {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token');
+      console.log('Token removido do localStorage');
     }
   }
 
@@ -115,13 +122,11 @@ export class ApiService {
     }
     return null;
   }
-
   static removeUser(): void {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('user');
     }
   }
-
   static logout(): void {
     this.removeAuthToken();
     this.removeUser();

@@ -5,7 +5,11 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  token: string;
+  authorization: {
+    token: string;
+    type: string;
+    expires_in: number;
+  };
   user: User;
   message: string;
 }
