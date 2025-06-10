@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -25,6 +26,8 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string>("")
+  const router = useRouter()
+  
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -74,10 +77,15 @@ export function LoginForm() {
         
         // Debug completo do localStorage
         AuthService.debugLocalStorage()
-        
-        // Redirecionar após login bem-sucedido
+          // Redirecionar após login bem-sucedido
         console.log("🔄 Redirecionando para a página inicial...")
-        window.location.href = "/"
+        router.push("/")
+        
+        // Trigger storage event para atualizar outros componentes
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'auth_token',
+          newValue: savedToken,
+        }))
       } else {
         throw new Error("Falha na autenticação após login")
       }
