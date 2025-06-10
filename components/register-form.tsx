@@ -1,40 +1,40 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { useForm, Controller } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import * as yup from "yup";
-import { Car, Eye, EyeOff } from "lucide-react";
-import { IMaskInput } from "react-imask";
+import { useState } from 'react';
+import Link from 'next/link';
+import { useForm, Controller } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+import { Car, Eye, EyeOff } from 'lucide-react';
+import { IMaskInput } from 'react-imask';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { Checkbox } from "@/components/ui/checkbox";
-import { PasswordStrength } from "@/components/password-strength";
-import { FormValidationSummary } from "@/components/form-validation-summary";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
+import { PasswordStrength } from '@/components/password-strength';
+import { FormValidationSummary } from '@/components/form-validation-summary';
 import {
   ValidationIndicator,
   useValidationStatus,
   validators,
   getValidationMessage,
-} from "@/components/validation-indicator";
-import { AuthService, ApiError, UtilsService } from "@/services";
+} from '@/components/validation-indicator';
+import { AuthService, ApiError, UtilsService } from '@/services';
 
 // Schema de validação simplificado com Yup
 const registerSchema = yup.object({
@@ -46,10 +46,10 @@ const registerSchema = yup.object({
     .min(2)
     .max(100)
     .matches(/^[a-zA-ZÀ-ÿ\s]+$/)
-    .test("full-name", (value) => {
+    .test('full-name', value => {
       if (!value) return false;
-      const names = value.trim().split(" ");
-      return names.length >= 2 && names.every((name) => name.length >= 2);
+      const names = value.trim().split(' ');
+      return names.length >= 2 && names.every(name => name.length >= 2);
     }),
 
   email: yup.string().required().email().max(255).lowercase(),
@@ -64,37 +64,37 @@ const registerSchema = yup.object({
   password_confirmation: yup
     .string()
     .required()
-    .oneOf([yup.ref("password")]),
+    .oneOf([yup.ref('password')]),
 
   phone: yup
     .string()
     .required()
     .min(10)
     .max(15)
-    .test("phone-format", (value) => {
+    .test('phone-format', value => {
       if (!value) return false;
-      const digits = value.replace(/\D/g, "");
+      const digits = value.replace(/\D/g, '');
       return digits.length >= 10 && digits.length <= 11;
     }),
 
   cpf: yup
     .string()
     .required()
-    .test("cpf-length", (value) => {
+    .test('cpf-length', value => {
       if (!value) return false;
-      const digits = value.replace(/\D/g, "");
+      const digits = value.replace(/\D/g, '');
       return digits.length === 11;
     })
-    .test("cpf-valid", (value) => {
+    .test('cpf-valid', value => {
       if (!value) return false;
 
       // Verificar se o serviço de validação existe
-      if (typeof UtilsService?.validateCPF === "function") {
+      if (typeof UtilsService?.validateCPF === 'function') {
         return UtilsService.validateCPF(value);
       }
 
       // Validação básica alternativa se o serviço não existir
-      const digits = value.replace(/\D/g, "");
+      const digits = value.replace(/\D/g, '');
       return digits.length === 11 && !/^(.)\1+$/.test(digits);
     }),
 
@@ -108,7 +108,7 @@ const registerSchema = yup.object({
   birth_date: yup
     .string()
     .required()
-    .test("valid-date", (value) => {
+    .test('valid-date', value => {
       if (!value) return false;
       const birthDate = new Date(value);
       const today = new Date();
@@ -154,9 +154,9 @@ const registerSchema = yup.object({
     zip_code: yup
       .string()
       .required()
-      .test("cep-format", (value) => {
+      .test('cep-format', value => {
         if (!value) return false;
-        const digits = value.replace(/\D/g, "");
+        const digits = value.replace(/\D/g, '');
         return digits.length === 8;
       }),
   }),
@@ -171,28 +171,28 @@ export function RegisterForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string>('');
   const form = useForm<RegisterFormData>({
     resolver: yupResolver(registerSchema),
-    mode: "onChange",
-    reValidateMode: "onChange",
+    mode: 'onChange',
+    reValidateMode: 'onChange',
     defaultValues: {
       role_id: 1,
-      name: "",
-      email: "",
-      password: "",
-      password_confirmation: "",
-      phone: "",
-      cpf: "",
-      rg: "",
-      birth_date: "",
+      name: '',
+      email: '',
+      password: '',
+      password_confirmation: '',
+      phone: '',
+      cpf: '',
+      rg: '',
+      birth_date: '',
       address: {
-        address: "",
-        number: "",
-        complement: "",
-        city: "",
-        state: "",
-        zip_code: "",
+        address: '',
+        number: '',
+        complement: '',
+        city: '',
+        state: '',
+        zip_code: '',
       },
       agreeToTerms: false,
     },
@@ -200,40 +200,40 @@ export function RegisterForm() {
 
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
-    setError("");
+    setError('');
 
     try {
       const { agreeToTerms, ...submitData } = data;
 
-      console.log("Register data:", submitData);
+      console.log('Register data:', submitData);
 
       const result = await AuthService.register(submitData);
-      console.log("Registro bem-sucedido:", result);
+      console.log('Registro bem-sucedido:', result);
 
-      window.location.href = "/login";
+      window.location.href = '/login';
     } catch (error) {
-      console.error("Erro no registro:", error);
+      console.error('Erro no registro:', error);
       const apiError = error as ApiError;
-      setError(apiError.message || "Erro ao criar conta. Tente novamente.");
+      setError(apiError.message || 'Erro ao criar conta. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleCepChange = async (cep: string) => {
-    const cleanCep = cep.replace(/\D/g, "");
+    const cleanCep = cep.replace(/\D/g, '');
 
     if (cleanCep.length === 8) {
       setIsLoadingCep(true);
       try {
         const addressData = await UtilsService.getAddressByCep(cleanCep);
         if (addressData) {
-          form.setValue("address.address", addressData.address);
-          form.setValue("address.city", addressData.city);
-          form.setValue("address.state", addressData.state);
+          form.setValue('address.address', addressData.address);
+          form.setValue('address.city', addressData.city);
+          form.setValue('address.state', addressData.state);
         }
       } catch (error) {
-        console.error("Erro ao buscar CEP:", error);
+        console.error('Erro ao buscar CEP:', error);
       } finally {
         setIsLoadingCep(false);
       }
@@ -243,7 +243,7 @@ export function RegisterForm() {
   return (
     <Card className="w-full">
       <CardHeader className="text-center">
-        <div className="flex justify-center mb-4">
+        <div className="mb-4 flex justify-center">
           <Car className="h-12 w-12 text-black" />
         </div>
         <CardTitle className="text-2xl font-bold">Criar conta</CardTitle>
@@ -254,24 +254,24 @@ export function RegisterForm() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            {" "}
+            {' '}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+              <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {error}
               </div>
-            )}{" "}
+            )}{' '}
             {/* Resumo de Validação */}
             {/* <FormValidationSummary control={form.control} /> */}
             {/* Layout de duas colunas para Dados Pessoais e Endereço */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
               {/* Coluna 1: Dados Pessoais */}
               <div className="space-y-6">
                 <div className="flex items-center space-x-2">
                   <h3 className="text-lg font-semibold text-gray-900">
                     Dados Pessoais
                   </h3>
-                  <div className="flex-1 h-px bg-gray-200"></div>
-                </div>{" "}
+                  <div className="h-px flex-1 bg-gray-200"></div>
+                </div>{' '}
                 <FormField
                   control={form.control}
                   name="name"
@@ -297,24 +297,24 @@ export function RegisterForm() {
                       </FormControl>
                       {field.value && field.value.length > 0 && (
                         <p
-                          className={`text-xs mt-1 ${
+                          className={`mt-1 text-xs ${
                             useValidationStatus(
                               field.value,
                               validators.fullName,
                               2
-                            ) === "valid"
-                              ? "text-green-600"
+                            ) === 'valid'
+                              ? 'text-green-600'
                               : useValidationStatus(
-                                  field.value,
-                                  validators.fullName,
-                                  2
-                                ) === "pending"
-                              ? "text-gray-500"
-                              : "text-red-600"
+                                    field.value,
+                                    validators.fullName,
+                                    2
+                                  ) === 'pending'
+                                ? 'text-gray-500'
+                                : 'text-red-600'
                           }`}
                         >
                           {getValidationMessage(
-                            "fullName",
+                            'fullName',
                             field.value,
                             useValidationStatus(
                               field.value,
@@ -326,7 +326,7 @@ export function RegisterForm() {
                       )}
                     </FormItem>
                   )}
-                />{" "}
+                />{' '}
                 <FormField
                   control={form.control}
                   name="email"
@@ -339,13 +339,13 @@ export function RegisterForm() {
                             placeholder="seu.email@exemplo.com"
                             type="email"
                             {...field}
-                            onChange={(e) => {
+                            onChange={e => {
                               field.onChange(e.target.value.toLowerCase());
                             }}
                           />
                           {field.value &&
                             field.value.length > 0 &&
-                            (field.value.includes("@") ? (
+                            (field.value.includes('@') ? (
                               <ValidationIndicator
                                 status={useValidationStatus(
                                   field.value,
@@ -354,8 +354,8 @@ export function RegisterForm() {
                                 )}
                               />
                             ) : (
-                              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                                <span className="text-orange-500 text-sm">
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2 transform">
+                                <span className="text-sm text-orange-500">
                                   @
                                 </span>
                               </div>
@@ -364,26 +364,26 @@ export function RegisterForm() {
                       </FormControl>
                       {field.value && field.value.length > 0 && (
                         <p
-                          className={`text-xs mt-1 ${
+                          className={`mt-1 text-xs ${
                             useValidationStatus(
                               field.value,
                               validators.email,
                               3
-                            ) === "valid"
-                              ? "text-green-600"
+                            ) === 'valid'
+                              ? 'text-green-600'
                               : useValidationStatus(
-                                  field.value,
-                                  validators.email,
-                                  3
-                                ) === "pending"
-                              ? "text-gray-500"
-                              : !field.value.includes("@")
-                              ? "text-orange-600"
-                              : "text-red-600"
+                                    field.value,
+                                    validators.email,
+                                    3
+                                  ) === 'pending'
+                                ? 'text-gray-500'
+                                : !field.value.includes('@')
+                                  ? 'text-orange-600'
+                                  : 'text-red-600'
                           }`}
                         >
                           {getValidationMessage(
-                            "email",
+                            'email',
                             field.value,
                             useValidationStatus(
                               field.value,
@@ -396,8 +396,8 @@ export function RegisterForm() {
                     </FormItem>
                   )}
                 />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {" "}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {' '}
                   <FormField
                     control={form.control}
                     name="phone"
@@ -414,8 +414,8 @@ export function RegisterForm() {
                               }) => (
                                 <IMaskInput
                                   mask="(00) 00000-0000"
-                                  value={value || ""}
-                                  onAccept={(currentValue) => {
+                                  value={value || ''}
+                                  onAccept={currentValue => {
                                     onChange(currentValue);
                                   }}
                                   onBlur={onBlur}
@@ -438,24 +438,24 @@ export function RegisterForm() {
                         </FormControl>
                         {field.value && field.value.length > 0 && (
                           <p
-                            className={`text-xs mt-1 ${
+                            className={`mt-1 text-xs ${
                               useValidationStatus(
                                 field.value,
                                 validators.phone,
                                 8
-                              ) === "valid"
-                                ? "text-green-600"
+                              ) === 'valid'
+                                ? 'text-green-600'
                                 : useValidationStatus(
-                                    field.value,
-                                    validators.phone,
-                                    8
-                                  ) === "pending"
-                                ? "text-gray-500"
-                                : "text-red-600"
+                                      field.value,
+                                      validators.phone,
+                                      8
+                                    ) === 'pending'
+                                  ? 'text-gray-500'
+                                  : 'text-red-600'
                             }`}
                           >
                             {getValidationMessage(
-                              "phone",
+                              'phone',
                               field.value,
                               useValidationStatus(
                                 field.value,
@@ -467,7 +467,7 @@ export function RegisterForm() {
                         )}
                       </FormItem>
                     )}
-                  />{" "}
+                  />{' '}
                   <FormField
                     control={form.control}
                     name="birth_date"
@@ -510,14 +510,14 @@ export function RegisterForm() {
                             );
                             return (
                               <p
-                                className={`text-xs mt-1 ${
-                                  status === "valid"
-                                    ? "text-green-600"
-                                    : "text-red-600"
+                                className={`mt-1 text-xs ${
+                                  status === 'valid'
+                                    ? 'text-green-600'
+                                    : 'text-red-600'
                                 }`}
                               >
                                 {getValidationMessage(
-                                  "birthDate",
+                                  'birthDate',
                                   field.value,
                                   status,
                                   { age }
@@ -529,8 +529,8 @@ export function RegisterForm() {
                     )}
                   />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {" "}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {' '}
                   <FormField
                     control={form.control}
                     name="cpf"
@@ -547,8 +547,8 @@ export function RegisterForm() {
                               }) => (
                                 <IMaskInput
                                   mask="000.000.000-00"
-                                  value={value || ""}
-                                  onAccept={(currentValue) => {
+                                  value={value || ''}
+                                  onAccept={currentValue => {
                                     onChange(currentValue);
                                   }}
                                   onBlur={onBlur}
@@ -559,12 +559,12 @@ export function RegisterForm() {
                               )}
                             />
                             {field.value && field.value.length > 0 && (
-                              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2 transform">
                                 {(() => {
-                                  const digits = field.value.replace(/\D/g, "");
+                                  const digits = field.value.replace(/\D/g, '');
                                   if (digits.length < 11) {
                                     return (
-                                      <span className="text-gray-400 text-sm">
+                                      <span className="text-sm text-gray-400">
                                         ○
                                       </span>
                                     );
@@ -572,11 +572,11 @@ export function RegisterForm() {
                                   return UtilsService.validateCPF(
                                     field.value
                                   ) ? (
-                                    <span className="text-green-600 text-sm">
+                                    <span className="text-sm text-green-600">
                                       ✓
                                     </span>
                                   ) : (
-                                    <span className="text-red-600 text-sm">
+                                    <span className="text-sm text-red-600">
                                       ✗
                                     </span>
                                   );
@@ -588,22 +588,22 @@ export function RegisterForm() {
                         {field.value &&
                           field.value.length > 0 &&
                           (() => {
-                            const digits = field.value.replace(/\D/g, "");
+                            const digits = field.value.replace(/\D/g, '');
                             if (digits.length < 11) {
                               return (
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="mt-1 text-xs text-gray-500">
                                   Digite os 11 dígitos do CPF
                                 </p>
                               );
                             } else if (UtilsService.validateCPF(field.value)) {
                               return (
-                                <p className="text-xs text-green-600 mt-1">
+                                <p className="mt-1 text-xs text-green-600">
                                   CPF válido
                                 </p>
                               );
                             } else {
                               return (
-                                <p className="text-xs text-red-600 mt-1">
+                                <p className="mt-1 text-xs text-red-600">
                                   CPF inválido
                                 </p>
                               );
@@ -611,7 +611,7 @@ export function RegisterForm() {
                           })()}
                       </FormItem>
                     )}
-                  />{" "}
+                  />{' '}
                   <FormField
                     control={form.control}
                     name="rg"
@@ -631,8 +631,8 @@ export function RegisterForm() {
                                   definitions={{
                                     a: /[0-9X]/,
                                   }}
-                                  value={value || ""}
-                                  onAccept={(currentValue) => {
+                                  value={value || ''}
+                                  onAccept={currentValue => {
                                     onChange(currentValue);
                                   }}
                                   onBlur={onBlur}
@@ -643,18 +643,18 @@ export function RegisterForm() {
                               )}
                             />
                             {field.value && field.value.length > 0 && (
-                              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2 transform">
                                 {field.value.length >= 7 &&
                                 /^[0-9X.-]+$/i.test(field.value) ? (
-                                  <span className="text-green-600 text-sm">
+                                  <span className="text-sm text-green-600">
                                     ✓
                                   </span>
                                 ) : field.value.length < 7 ? (
-                                  <span className="text-gray-400 text-sm">
+                                  <span className="text-sm text-gray-400">
                                     ○
                                   </span>
                                 ) : (
-                                  <span className="text-red-600 text-sm">
+                                  <span className="text-sm text-red-600">
                                     ✗
                                   </span>
                                 )}
@@ -667,19 +667,19 @@ export function RegisterForm() {
                           (() => {
                             if (field.value.length < 7) {
                               return (
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="mt-1 text-xs text-gray-500">
                                   RG deve ter pelo menos 7 caracteres
                                 </p>
                               );
                             } else if (!/^[0-9X.-]+$/i.test(field.value)) {
                               return (
-                                <p className="text-xs text-red-600 mt-1">
+                                <p className="mt-1 text-xs text-red-600">
                                   Use apenas números, pontos, hífens e X
                                 </p>
                               );
                             } else {
                               return (
-                                <p className="text-xs text-green-600 mt-1">
+                                <p className="mt-1 text-xs text-green-600">
                                   RG válido
                                 </p>
                               );
@@ -697,8 +697,8 @@ export function RegisterForm() {
                   <h3 className="text-lg font-semibold text-gray-900">
                     Endereço
                   </h3>
-                  <div className="flex-1 h-px bg-gray-200"></div>
-                </div>{" "}
+                  <div className="h-px flex-1 bg-gray-200"></div>
+                </div>{' '}
                 <FormField
                   control={form.control}
                   name="address.zip_code"
@@ -715,8 +715,8 @@ export function RegisterForm() {
                             }) => (
                               <IMaskInput
                                 mask="00000-000"
-                                value={value || ""}
-                                onAccept={(currentValue) => {
+                                value={value || ''}
+                                onAccept={currentValue => {
                                   onChange(currentValue);
                                   handleCepChange(currentValue);
                                 }}
@@ -728,21 +728,21 @@ export function RegisterForm() {
                             )}
                           />
                           {isLoadingCep ? (
-                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 transform">
+                              <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-gray-900"></div>
                             </div>
                           ) : (
                             field.value &&
                             field.value.length === 9 && (
-                              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2 transform">
                                 {(() => {
-                                  const digits = field.value.replace(/\D/g, "");
+                                  const digits = field.value.replace(/\D/g, '');
                                   return digits.length === 8 ? (
-                                    <span className="text-green-600 text-sm">
+                                    <span className="text-sm text-green-600">
                                       ✓
                                     </span>
                                   ) : (
-                                    <span className="text-red-600 text-sm">
+                                    <span className="text-sm text-red-600">
                                       ✗
                                     </span>
                                   );
@@ -752,7 +752,7 @@ export function RegisterForm() {
                           )}
                         </div>
                       </FormControl>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="mt-1 text-xs text-gray-500">
                         O endereço será preenchido automaticamente
                       </p>
                     </FormItem>
@@ -798,14 +798,14 @@ export function RegisterForm() {
                             placeholder="UF"
                             maxLength={2}
                             {...field}
-                            style={{ textTransform: "uppercase" }}
+                            style={{ textTransform: 'uppercase' }}
                           />
                         </FormControl>
                       </FormItem>
                     )}
                   />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="address.city"
@@ -843,11 +843,11 @@ export function RegisterForm() {
                 <h3 className="text-lg font-semibold text-gray-900">
                   Segurança
                 </h3>
-                <div className="flex-1 h-px bg-gray-200"></div>
+                <div className="h-px flex-1 bg-gray-200"></div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {" "}
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {' '}
                 <FormField
                   control={form.control}
                   name="password"
@@ -858,7 +858,7 @@ export function RegisterForm() {
                         <div className="relative">
                           <Input
                             placeholder="Digite sua senha"
-                            type={showPassword ? "text" : "password"}
+                            type={showPassword ? 'text' : 'password'}
                             {...field}
                           />
                           <Button
@@ -877,11 +877,11 @@ export function RegisterForm() {
                         </div>
                       </FormControl>
                       <div className="mt-2">
-                        <PasswordStrength password={field.value || ""} />
+                        <PasswordStrength password={field.value || ''} />
                       </div>
                     </FormItem>
                   )}
-                />{" "}
+                />{' '}
                 <FormField
                   control={form.control}
                   name="password_confirmation"
@@ -892,7 +892,7 @@ export function RegisterForm() {
                         <div className="relative">
                           <Input
                             placeholder="Confirme sua senha"
-                            type={showConfirmPassword ? "text" : "password"}
+                            type={showConfirmPassword ? 'text' : 'password'}
                             {...field}
                           />
                           <Button
@@ -911,15 +911,15 @@ export function RegisterForm() {
                             )}
                           </Button>
                           {field.value && field.value.length > 0 && (
-                            <div className="absolute right-12 top-1/2 transform -translate-y-1/2">
+                            <div className="absolute right-12 top-1/2 -translate-y-1/2 transform">
                               {(() => {
-                                const password = form.getValues("password");
+                                const password = form.getValues('password');
                                 return field.value === password ? (
-                                  <span className="text-green-600 text-sm">
+                                  <span className="text-sm text-green-600">
                                     ✓
                                   </span>
                                 ) : (
-                                  <span className="text-red-600 text-sm">
+                                  <span className="text-sm text-red-600">
                                     ✗
                                   </span>
                                 );
@@ -930,13 +930,13 @@ export function RegisterForm() {
                       </FormControl>
                       {field.value &&
                         (() => {
-                          const password = form.getValues("password");
+                          const password = form.getValues('password');
                           if (
                             field.value !== password &&
                             field.value.length > 0
                           ) {
                             return (
-                              <p className="text-xs text-red-600 mt-1">
+                              <p className="mt-1 text-xs text-red-600">
                                 As senhas não coincidem
                               </p>
                             );
@@ -945,7 +945,7 @@ export function RegisterForm() {
                             field.value.length > 0
                           ) {
                             return (
-                              <p className="text-xs text-green-600 mt-1">
+                              <p className="mt-1 text-xs text-green-600">
                                 Senhas coincidem
                               </p>
                             );
@@ -972,17 +972,17 @@ export function RegisterForm() {
                     </FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel className="text-sm">
-                        Aceito os{" "}
+                        Aceito os{' '}
                         <Link
                           href="/termos"
-                          className="text-black hover:underline font-medium"
+                          className="font-medium text-black hover:underline"
                         >
                           termos e condições
-                        </Link>{" "}
-                        e a{" "}
+                        </Link>{' '}
+                        e a{' '}
                         <Link
                           href="/privacidade"
-                          className="text-black hover:underline font-medium"
+                          className="font-medium text-black hover:underline"
                         >
                           política de privacidade
                         </Link>
@@ -994,16 +994,16 @@ export function RegisterForm() {
 
               <Button
                 type="submit"
-                className="w-full bg-black hover:bg-gray-800 h-12 text-base font-medium"
+                className="h-12 w-full bg-black text-base font-medium hover:bg-gray-800"
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
                     <span>Criando conta...</span>
                   </div>
                 ) : (
-                  "Criar conta"
+                  'Criar conta'
                 )}
               </Button>
             </div>
@@ -1015,7 +1015,7 @@ export function RegisterForm() {
 
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Já tem uma conta?{" "}
+              Já tem uma conta?{' '}
               <Link
                 href="/login"
                 className="font-medium text-black hover:underline"

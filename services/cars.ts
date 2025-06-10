@@ -1,5 +1,5 @@
-import { ApiService } from "./api";
-import { Car, CarFilters, CarListResponse } from "./types";
+import { ApiService } from './api';
+import { Car, CarFilters, CarListResponse } from './types';
 
 export class CarService {
   /**
@@ -14,19 +14,19 @@ export class CarService {
 
       if (filters) {
         Object.entries(filters).forEach(([key, value]) => {
-          if (value !== undefined && value !== null && value !== "") {
+          if (value !== undefined && value !== null && value !== '') {
             queryParams.append(key, value.toString());
           }
         });
       }
 
-      queryParams.append("page", page.toString());
+      queryParams.append('page', page.toString());
 
       const endpoint = `/cars?${queryParams.toString()}`;
       const response = await ApiService.get<CarListResponse>(endpoint);
       return response;
     } catch (error) {
-      console.error("Erro ao buscar carros:", error);
+      console.error('Erro ao buscar carros:', error);
       throw error;
     }
   }
@@ -39,7 +39,7 @@ export class CarService {
       const response = await ApiService.get<Car>(`/cars/${id}`);
       return response;
     } catch (error) {
-      console.error("Erro ao buscar carro:", error);
+      console.error('Erro ao buscar carro:', error);
       throw error;
     }
   }
@@ -48,13 +48,13 @@ export class CarService {
    * Cria um novo anúncio de carro
    */
   static async createCar(
-    carData: Omit<Car, "id" | "user_id" | "created_at" | "updated_at">
+    carData: Omit<Car, 'id' | 'user_id' | 'created_at' | 'updated_at'>
   ): Promise<Car> {
     try {
-      const response = await ApiService.post<Car>("/cars", carData);
+      const response = await ApiService.post<Car>('/cars', carData);
       return response;
     } catch (error) {
-      console.error("Erro ao criar anúncio:", error);
+      console.error('Erro ao criar anúncio:', error);
       throw error;
     }
   }
@@ -67,7 +67,7 @@ export class CarService {
       const response = await ApiService.put<Car>(`/cars/${id}`, carData);
       return response;
     } catch (error) {
-      console.error("Erro ao atualizar anúncio:", error);
+      console.error('Erro ao atualizar anúncio:', error);
       throw error;
     }
   }
@@ -79,7 +79,7 @@ export class CarService {
     try {
       await ApiService.delete(`/cars/${id}`);
     } catch (error) {
-      console.error("Erro ao remover anúncio:", error);
+      console.error('Erro ao remover anúncio:', error);
       throw error;
     }
   }
@@ -101,7 +101,7 @@ export class CarService {
       const response = await ApiService.get<CarListResponse>(endpoint);
       return response;
     } catch (error) {
-      console.error("Erro ao pesquisar carros:", error);
+      console.error('Erro ao pesquisar carros:', error);
       throw error;
     }
   }
@@ -112,7 +112,7 @@ export class CarService {
   static async getFeaturedCars(limit: number = 6): Promise<Car[]> {
     try {
       const queryParams = new URLSearchParams({
-        featured: "true",
+        featured: 'true',
         limit: limit.toString(),
       });
 
@@ -120,7 +120,7 @@ export class CarService {
       const response = await ApiService.get<Car[]>(endpoint);
       return response;
     } catch (error) {
-      console.error("Erro ao buscar carros em destaque:", error);
+      console.error('Erro ao buscar carros em destaque:', error);
       throw error;
     }
   }
@@ -138,7 +138,7 @@ export class CarService {
       const response = await ApiService.get<CarListResponse>(endpoint);
       return response;
     } catch (error) {
-      console.error("Erro ao buscar carros do usuário:", error);
+      console.error('Erro ao buscar carros do usuário:', error);
       throw error;
     }
   }
@@ -148,10 +148,10 @@ export class CarService {
    */
   static async getBrands(): Promise<string[]> {
     try {
-      const response = await ApiService.get<string[]>("/cars/brands");
+      const response = await ApiService.get<string[]>('/cars/brands');
       return response;
     } catch (error) {
-      console.error("Erro ao buscar marcas:", error);
+      console.error('Erro ao buscar marcas:', error);
       throw error;
     }
   }
@@ -166,7 +166,7 @@ export class CarService {
       const response = await ApiService.get<string[]>(endpoint);
       return response;
     } catch (error) {
-      console.error("Erro ao buscar modelos:", error);
+      console.error('Erro ao buscar modelos:', error);
       throw error;
     }
   }
@@ -187,7 +187,7 @@ export class CarService {
       const response = await fetch(
         `${ApiService.getBaseURL()}/cars/${carId}/images`,
         {
-          method: "POST",
+          method: 'POST',
           headers: {
             Authorization: `Bearer ${ApiService.getAuthToken()}`,
           },
@@ -196,13 +196,13 @@ export class CarService {
       );
 
       if (!response.ok) {
-        throw new Error("Erro ao fazer upload das imagens");
+        throw new Error('Erro ao fazer upload das imagens');
       }
 
       const data = await response.json();
       return data.images;
     } catch (error) {
-      console.error("Erro ao fazer upload das imagens:", error);
+      console.error('Erro ao fazer upload das imagens:', error);
       throw error;
     }
   }
@@ -215,20 +215,20 @@ export class CarService {
       const response = await fetch(
         `${ApiService.getBaseURL()}/cars/${carId}/images`,
         {
-          method: "DELETE",
+          method: 'DELETE',
           headers: {
             Authorization: `Bearer ${ApiService.getAuthToken()}`,
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({ imagePath }),
         }
       );
 
       if (!response.ok) {
-        throw new Error("Erro ao remover a imagem");
+        throw new Error('Erro ao remover a imagem');
       }
     } catch (error) {
-      console.error("Erro ao remover a imagem do carro:", error);
+      console.error('Erro ao remover a imagem do carro:', error);
       throw error;
     }
   }

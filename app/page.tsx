@@ -1,7 +1,7 @@
-import { HeroBanner } from "@/components/hero-banner"
-import { FeaturedCars } from "@/components/featured-cars"
-import { CarCategories } from "@/components/car-categories"
-import { CarFilters } from "@/components/car-filters"
+import { HeroBanner } from '@/components/hero-banner';
+import { FeaturedCars } from '@/components/featured-cars';
+import { CarCategories } from '@/components/car-categories';
+import { CarFilters } from '@/components/car-filters';
 
 export default function HomePage() {
   return (
@@ -9,7 +9,7 @@ export default function HomePage() {
       <HeroBanner />
       <CarCategories />
       <section className="container mx-auto px-4 py-12">
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col gap-8 lg:flex-row">
           <aside className="lg:w-1/4">
             <CarFilters />
           </aside>
@@ -19,5 +19,5 @@ export default function HomePage() {
         </div>
       </section>
     </main>
-  )
+  );
 }

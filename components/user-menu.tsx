@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { User, LogOut, Settings, UserCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import Link from 'next/link';
+import { User, LogOut, Settings, UserCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,9 +11,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/hooks/use-auth";
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useAuth } from '@/hooks/use-auth';
 
 export function UserMenu() {
   const { user, logout } = useAuth();
@@ -26,7 +26,7 @@ export function UserMenu() {
     try {
       await logout();
     } catch (error) {
-      console.error("Erro no logout:", error);
+      console.error('Erro no logout:', error);
     } finally {
       setIsLoggingOut(false);
     }
@@ -34,9 +34,9 @@ export function UserMenu() {
 
   const getInitials = (name: string) => {
     return name
-      .split(" ")
-      .map((word) => word.charAt(0))
-      .join("")
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
       .toUpperCase()
       .slice(0, 2);
   };
@@ -47,7 +47,7 @@ export function UserMenu() {
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
             <AvatarImage src="/placeholder-user.jpg" alt={user.name} />
-            <AvatarFallback className="bg-black text-white text-sm">
+            <AvatarFallback className="bg-black text-sm text-white">
               {getInitials(user.name)}
             </AvatarFallback>
           </Avatar>
@@ -87,7 +87,7 @@ export function UserMenu() {
           disabled={isLoggingOut}
         >
           <LogOut className="mr-2 h-4 w-4" />
-          <span>{isLoggingOut ? "Saindo..." : "Logout"}</span>
+          <span>{isLoggingOut ? 'Saindo...' : 'Logout'}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

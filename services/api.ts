@@ -5,7 +5,9 @@ export class ApiService {
 
   static getBaseURL(): string {
     if (!this.baseURL) {
-      throw new Error('Base URL da API não definida. Verifique a variável de ambiente NEXT_PUBLIC_API_URL.');
+      throw new Error(
+        'Base URL da API não definida. Verifique a variável de ambiente NEXT_PUBLIC_API_URL.'
+      );
     }
     return this.baseURL;
   }
@@ -15,11 +17,11 @@ export class ApiService {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
-    
+
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        Accept: 'application/json',
         ...options.headers,
       },
       ...options,
@@ -30,13 +32,13 @@ export class ApiService {
     if (token) {
       config.headers = {
         ...config.headers,
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       };
     }
 
     try {
       const response = await fetch(url, config);
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         const apiError: ApiError = {
@@ -53,7 +55,7 @@ export class ApiService {
       if (error instanceof Error && 'status' in error) {
         throw error; // Re-throw API errors
       }
-      
+
       // Network or other errors
       const networkError: ApiError = {
         message: 'Erro de conexão. Verifique sua internet.',

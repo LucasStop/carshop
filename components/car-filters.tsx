@@ -1,19 +1,41 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export function CarFilters() {
-  const [priceRange, setPriceRange] = useState([100000, 2000000])
+  const [priceRange, setPriceRange] = useState([100000, 2000000]);
 
-  const brands = ["Mercedes-Benz", "BMW", "Audi", "Porsche", "Jaguar", "Land Rover", "Volvo", "Lexus"]
+  const brands = [
+    'Mercedes-Benz',
+    'BMW',
+    'Audi',
+    'Porsche',
+    'Jaguar',
+    'Land Rover',
+    'Volvo',
+    'Lexus',
+  ];
 
-  const carTypes = ["Sedan", "SUV", "Hatchback", "Coupé", "Conversível", "Wagon"]
+  const carTypes = [
+    'Sedan',
+    'SUV',
+    'Hatchback',
+    'Coupé',
+    'Conversível',
+    'Wagon',
+  ];
 
   return (
     <Card className="sticky top-24">
@@ -29,7 +51,7 @@ export function CarFilters() {
               <SelectValue placeholder="Selecione a marca" />
             </SelectTrigger>
             <SelectContent>
-              {brands.map((brand) => (
+              {brands.map(brand => (
                 <SelectItem key={brand} value={brand.toLowerCase()}>
                   {brand}
                 </SelectItem>
@@ -50,7 +72,7 @@ export function CarFilters() {
               step={10000}
               className="w-full"
             />
-            <div className="flex justify-between text-sm text-gray-500 mt-2">
+            <div className="mt-2 flex justify-between text-sm text-gray-500">
               <span>R$ {priceRange[0].toLocaleString()}</span>
               <span>R$ {priceRange[1].toLocaleString()}</span>
             </div>
@@ -66,7 +88,7 @@ export function CarFilters() {
                 <SelectValue placeholder="De" />
               </SelectTrigger>
               <SelectContent>
-                {Array.from({ length: 10 }, (_, i) => 2024 - i).map((year) => (
+                {Array.from({ length: 10 }, (_, i) => 2024 - i).map(year => (
                   <SelectItem key={year} value={year.toString()}>
                     {year}
                   </SelectItem>
@@ -78,7 +100,7 @@ export function CarFilters() {
                 <SelectValue placeholder="Até" />
               </SelectTrigger>
               <SelectContent>
-                {Array.from({ length: 10 }, (_, i) => 2024 - i).map((year) => (
+                {Array.from({ length: 10 }, (_, i) => 2024 - i).map(year => (
                   <SelectItem key={year} value={year.toString()}>
                     {year}
                   </SelectItem>
@@ -92,7 +114,7 @@ export function CarFilters() {
         <div className="space-y-3">
           <Label className="text-sm font-medium">Tipo de Carro</Label>
           <div className="space-y-2">
-            {carTypes.map((type) => (
+            {carTypes.map(type => (
               <div key={type} className="flex items-center space-x-2">
                 <Checkbox id={type} />
                 <Label htmlFor={type} className="text-sm font-normal">
@@ -105,12 +127,14 @@ export function CarFilters() {
 
         {/* Botões */}
         <div className="space-y-2 pt-4">
-          <Button className="w-full bg-black text-white hover:bg-gray-800">Aplicar Filtros</Button>
+          <Button className="w-full bg-black text-white hover:bg-gray-800">
+            Aplicar Filtros
+          </Button>
           <Button variant="outline" className="w-full">
             Limpar Filtros
           </Button>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

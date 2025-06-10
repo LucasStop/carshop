@@ -13,12 +13,14 @@ export class UtilsService {
     try {
       // Remove caracteres não numéricos do CEP
       const cleanCep = cep.replace(/\D/g, '');
-      
+
       if (cleanCep.length !== 8) {
         throw new Error('CEP deve ter 8 dígitos');
       }
 
-      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      const response = await fetch(
+        `https://viacep.com.br/ws/${cleanCep}/json/`
+      );
       const data = await response.json();
 
       if (data.erro) {
@@ -43,17 +45,17 @@ export class UtilsService {
   static validateCPF(cpf: string): boolean {
     // Remove caracteres não numéricos
     const cleanCpf = cpf.replace(/\D/g, '');
-    
+
     // Verifica se tem 11 dígitos
     if (cleanCpf.length !== 11) {
       return false;
     }
-    
+
     // Verifica se todos os dígitos são iguais
     if (/^(\d)\1{10}$/.test(cleanCpf)) {
       return false;
     }
-    
+
     // Valida primeiro dígito verificador
     let sum = 0;
     for (let i = 0; i < 9; i++) {
@@ -61,11 +63,11 @@ export class UtilsService {
     }
     let digit1 = 11 - (sum % 11);
     if (digit1 > 9) digit1 = 0;
-    
+
     if (parseInt(cleanCpf[9]) !== digit1) {
       return false;
     }
-    
+
     // Valida segundo dígito verificador
     sum = 0;
     for (let i = 0; i < 10; i++) {
@@ -73,7 +75,7 @@ export class UtilsService {
     }
     let digit2 = 11 - (sum % 11);
     if (digit2 > 9) digit2 = 0;
-    
+
     return parseInt(cleanCpf[10]) === digit2;
   }
 
@@ -90,13 +92,13 @@ export class UtilsService {
    */
   static formatPhone(phone: string): string {
     const cleanPhone = phone.replace(/\D/g, '');
-    
+
     if (cleanPhone.length === 11) {
       return cleanPhone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
     } else if (cleanPhone.length === 10) {
       return cleanPhone.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
     }
-    
+
     return phone;
   }
 
@@ -155,11 +157,14 @@ export class UtilsService {
     const birth = new Date(birthDate);
     let age = today.getFullYear() - birth.getFullYear();
     const monthDiff = today.getMonth() - birth.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birth.getDate())
+    ) {
       age--;
     }
-    
+
     return age;
   }
 
@@ -174,7 +179,7 @@ export class UtilsService {
       const response = await fetch(`${ApiService.getBaseURL()}${endpoint}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${ApiService.getAuthToken()}`,
+          Authorization: `Bearer ${ApiService.getAuthToken()}`,
         },
         body: formData,
       });

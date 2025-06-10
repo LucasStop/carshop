@@ -1,57 +1,70 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import Link from "next/link"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { Car, ArrowLeft } from "lucide-react"
+import { useState } from 'react';
+import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Car, ArrowLeft } from 'lucide-react';
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email("Email inválido"),
-})
+  email: z.string().email('Email inválido'),
+});
 
-type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
+type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 export function ForgotPasswordForm() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const form = useForm<ForgotPasswordFormData>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
-      email: "",
+      email: '',
     },
-  })
+  });
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
-    setIsLoading(true)
-    
+    setIsLoading(true);
+
     try {
       // Aqui você implementará a lógica de recuperação de senha
-      console.log("Forgot password data:", data)
-      
+      console.log('Forgot password data:', data);
+
       // Simulação de API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      setIsSubmitted(true)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      setIsSubmitted(true);
     } catch (error) {
-      console.error("Erro ao enviar email de recuperação:", error)
+      console.error('Erro ao enviar email de recuperação:', error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   if (isSubmitted) {
     return (
       <Card className="w-full">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
+          <div className="mb-4 flex justify-center">
             <Car className="h-12 w-12 text-black" />
           </div>
           <CardTitle className="text-2xl font-bold">Email enviado!</CardTitle>
@@ -63,13 +76,11 @@ export function ForgotPasswordForm() {
         <CardContent>
           <div className="space-y-4">
             <Button className="w-full bg-black hover:bg-gray-800" asChild>
-              <Link href="/login">
-                Voltar para login
-              </Link>
+              <Link href="/login">Voltar para login</Link>
             </Button>
-            
-            <Button 
-              variant="outline" 
+
+            <Button
+              variant="outline"
               className="w-full"
               onClick={() => setIsSubmitted(false)}
             >
@@ -78,16 +89,18 @@ export function ForgotPasswordForm() {
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
     <Card className="w-full">
       <CardHeader className="text-center">
-        <div className="flex justify-center mb-4">
+        <div className="mb-4 flex justify-center">
           <Car className="h-12 w-12 text-black" />
         </div>
-        <CardTitle className="text-2xl font-bold">Esqueci minha senha</CardTitle>
+        <CardTitle className="text-2xl font-bold">
+          Esqueci minha senha
+        </CardTitle>
         <CardDescription>
           Digite seu email para receber as instruções de recuperação de senha
         </CardDescription>
@@ -113,8 +126,12 @@ export function ForgotPasswordForm() {
               )}
             />
 
-            <Button type="submit" className="w-full bg-black hover:bg-gray-800" disabled={isLoading}>
-              {isLoading ? "Enviando..." : "Enviar instruções"}
+            <Button
+              type="submit"
+              className="w-full bg-black hover:bg-gray-800"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Enviando...' : 'Enviar instruções'}
             </Button>
           </form>
         </Form>
@@ -122,12 +139,12 @@ export function ForgotPasswordForm() {
         <div className="mt-6 text-center">
           <Button variant="ghost" asChild>
             <Link href="/login" className="inline-flex items-center">
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Voltar para login
             </Link>
           </Button>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
