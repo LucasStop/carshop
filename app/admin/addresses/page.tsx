@@ -1,51 +1,55 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { AdminService, AdminAddress } from '@/services/admin';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
-  Box,
-  Typography,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  Paper,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Pagination,
-  Grid,
+} from '@/components/ui/table';
+import {
   Card,
   CardContent,
-} from '@mui/material';
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
-  Visibility as ViewIcon,
-  Search as SearchIcon,
-} from '@mui/icons-material';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
-  AdminService,
-  AdminAddress,
-  AdminListResponse,
-} from '@/services/admin';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Search, Eye, MapPin } from 'lucide-react';
 import { usePermissions } from '@/hooks/use-permissions';
+import { IconButton } from '@mui/material';
 
 export default function AdminAddressesPage() {
-  const { canViewAddresses } = usePermissions();
+  usePermissions();
   const [addresses, setAddresses] = useState<AdminAddress[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [search, setSearch] = useState('');
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    last_page: 1,
+    per_page: 10,
+    total: 0,
+    from: 0,
+    to: 0,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const [cityFilter, setCityFilter] = useState('');
   const [stateFilter, setStateFilter] = useState('');
   const [selectedAddress, setSelectedAddress] = useState<AdminAddress | null>(
@@ -53,7 +57,6 @@ export default function AdminAddressesPage() {
   );
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
-  const perPage = 10;
   const brazilianStates = [
     'AC',
     'AL',
@@ -84,42 +87,52 @@ export default function AdminAddressesPage() {
     'TO',
   ];
 
-  const loadAddresses = async (
-    currentPage = page,
-    currentSearch = search,
-    currentCity = cityFilter,
-    currentState = stateFilter
-  ) => {
-    try {
-      setLoading(true);
-      const response: AdminListResponse<AdminAddress> =
-        await AdminService.getAddresses({
-          page: currentPage,
-          per_page: perPage,
-          search: currentSearch || undefined,
-          city: currentCity || undefined,
-          state: currentState || undefined,
-        });
+  useEffect(() => {
+    loadAddresses();
+  }, []);
 
-      setAddresses(response.data);
-      setTotalPages(response.meta.last_page);
-      setTotal(response.meta.total);
+  const loadAddresses = async () => {
+    try {
+      setIsLoading(true);
+      const response = await AdminService.getAddresses({
+        page: pagination.current_page,
+        per_page: pagination.per_page,
+        search: searchTerm || undefined,
+        city: cityFilter || undefined,
+        state: stateFilter || undefined,
+      });
+
+      if (response && response.data) {
+        setAddresses(response.data);
+        setPagination({
+          current_page: response.current_page,
+          last_page: response.last_page,
+          per_page: response.per_page,
+          total: response.total,
+          from: response.from,
+          to: response.to,
+        });
+      }
     } catch (error) {
       console.error('Erro ao carregar endereços:', error);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (canViewAddresses()) {
-      loadAddresses();
-    }
-  }, [page, canViewAddresses]);
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    setPagination(prev => ({ ...prev, current_page: 1 }));
+  };
 
-  const handleSearch = () => {
-    setPage(1);
-    loadAddresses(1, search, cityFilter, stateFilter);
+  const handleCityFilter = (city: string) => {
+    setCityFilter(city);
+    setPagination(prev => ({ ...prev, current_page: 1 }));
+  };
+
+  const handleStateFilter = (state: string) => {
+    setStateFilter(state);
+    setPagination(prev => ({ ...prev, current_page: 1 }));
   };
 
   const handleView = (address: AdminAddress) => {
@@ -127,251 +140,324 @@ export default function AdminAddressesPage() {
     setIsViewDialogOpen(true);
   };
 
-  if (!canViewAddresses()) {
+  if (isLoading && addresses.length === 0) {
     return (
-      <Box p={3}>
-        <Typography variant="h5" color="error">
-          Acesso negado
-        </Typography>
-        <Typography>
-          Você não tem permissão para acessar esta página.
-        </Typography>
-      </Box>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <div className="h-6 w-32 animate-pulse rounded bg-gray-200" />
+            <div className="h-4 w-48 animate-pulse rounded bg-gray-200" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="flex items-center space-x-4">
+                  <div className="h-10 w-10 animate-pulse rounded-full bg-gray-200" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-48 animate-pulse rounded bg-gray-200" />
+                    <div className="h-3 w-32 animate-pulse rounded bg-gray-200" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
-
   return (
-    <Box p={3}>
-      <Box mb={3}>
-        <Typography variant="h4" component="h1">
-          Gerenciar Endereços
-        </Typography>
-      </Box>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Endereços</h1>
+          <p className="mt-2 text-gray-600">
+            Gerencie todos os endereços dos usuários do sistema
+          </p>
+        </div>
+      </div>
 
-      {/* Filtros */}
-      <Card sx={{ mb: 3 }}>
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Filtros</CardTitle>
+          <CardDescription>
+            Use os filtros abaixo para encontrar endereços específicos
+          </CardDescription>
+        </CardHeader>
         <CardContent>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="Buscar endereços"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Buscar por endereço, usuário..."
-                onKeyPress={e => e.key === 'Enter' && handleSearch()}
-              />
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <TextField
-                fullWidth
-                label="Cidade"
-                value={cityFilter}
-                onChange={e => setCityFilter(e.target.value)}
+          <div className="flex flex-col space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
+                <Input
+                  placeholder="Buscar por endereço, usuário..."
+                  value={searchTerm}
+                  onChange={e => handleSearch(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div className="w-full sm:w-48">
+              <Input
                 placeholder="Filtrar por cidade"
+                value={cityFilter}
+                onChange={e => handleCityFilter(e.target.value)}
               />
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <FormControl fullWidth>
-                <InputLabel>Estado</InputLabel>
-                <Select
-                  value={stateFilter}
-                  label="Estado"
-                  onChange={e => setStateFilter(e.target.value)}
-                >
-                  <MenuItem value="">Todos</MenuItem>
+            </div>
+            <div className="w-full sm:w-48">
+              {/* <Select value={stateFilter} onValueChange={handleStateFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos os estados</SelectItem>
                   {brazilianStates.map(state => (
-                    <MenuItem key={state} value={state}>
+                    <SelectItem key={state} value={state}>
                       {state}
-                    </MenuItem>
+                    </SelectItem>
                   ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <Button
-                fullWidth
-                variant="contained"
-                startIcon={<SearchIcon />}
-                onClick={handleSearch}
-              >
-                Buscar
-              </Button>
-            </Grid>
-            <Grid item xs={12} md={1}>
-              <Typography variant="body2" color="textSecondary">
-                Total: {total}
-              </Typography>
-            </Grid>
-          </Grid>
+                </SelectContent>
+              </Select> */}
+            </div>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Tabela */}
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Usuário</TableCell>
-              <TableCell>Endereço</TableCell>
-              <TableCell>Número</TableCell>
-              <TableCell>Complemento</TableCell>
-              <TableCell>Cidade</TableCell>
-              <TableCell>Estado</TableCell>
-              <TableCell>CEP</TableCell>
-              <TableCell align="center">Ações</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
+      {/* Addresses Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Lista de Endereços ({pagination.total})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={9} align="center">
-                  Carregando...
-                </TableCell>
+                <TableHead>ID</TableHead>
+                <TableHead>Usuário</TableHead>
+                <TableHead>Endereço</TableHead>
+                <TableHead>Cidade</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead>CEP</TableHead>
+                <TableHead className="text-center">Ações</TableHead>
               </TableRow>
-            ) : addresses.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={9} align="center">
-                  Nenhum endereço encontrado
-                </TableCell>
-              </TableRow>
-            ) : (
-              addresses.map(address => (
-                <TableRow key={address.id}>
-                  <TableCell>{address.id}</TableCell>
-                  <TableCell>
-                    {address.user ? (
-                      <Box>
-                        <Typography variant="body2" fontWeight="bold">
-                          {address.user.name}
-                        </Typography>
-                        <Typography variant="caption" color="textSecondary">
-                          {address.user.email}
-                        </Typography>
-                      </Box>
-                    ) : (
-                      'N/A'
-                    )}
-                  </TableCell>
-                  <TableCell>{address.address}</TableCell>
-                  <TableCell>{address.number}</TableCell>
-                  <TableCell>{address.complement || '-'}</TableCell>
-                  <TableCell>{address.city}</TableCell>
-                  <TableCell>{address.state}</TableCell>
-                  <TableCell>{address.zip_code}</TableCell>
-                  <TableCell align="center">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleView(address)}
-                      title="Visualizar"
-                    >
-                      <ViewIcon />
-                    </IconButton>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center">
+                    Carregando...
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              ) : addresses.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center">
+                    Nenhum endereço encontrado
+                  </TableCell>
+                </TableRow>
+              ) : (
+                addresses.map(address => (
+                  <TableRow key={address.id}>
+                    <TableCell>{address.id}</TableCell>
+                    <TableCell>
+                      {address.user ? (
+                        <div>
+                          <div className="font-medium">{address.user.name}</div>
+                          <div className="text-sm text-gray-500">
+                            {address.user.email}
+                          </div>
+                        </div>
+                      ) : (
+                        'N/A'
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">
+                          {address.address}, {address.number}
+                        </div>
+                        {address.complement && (
+                          <div className="text-sm text-gray-500">
+                            {address.complement}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>{address.city}</TableCell>
+                    <TableCell>{address.state}</TableCell>
+                    <TableCell>{address.zip_code}</TableCell>
+                    <TableCell className="text-center">
+                      <IconButton
+                        onClick={() => handleView(address)}
+                        aria-label="Ver detalhes do endereço"
+                        sx={{ color: 'black' }}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </IconButton>
+                      {/* <IconButton
+                        onClick={() => handleView(address)}
+                        aria-label="Ver detalhes do endereço"
+                      >
+                        <Eye className="mr-2 h-4 w-4" />{' '}
+                      </IconButton> */}
+                      {/* <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => handleView(address)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            Ver detalhes
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu> */}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
 
-      {/* Paginação */}
-      {totalPages > 1 && (
-        <Box display="flex" justifyContent="center" mt={3}>
-          <Pagination
-            count={totalPages}
-            page={page}
-            onChange={(_, value) => setPage(value)}
-            color="primary"
-          />
-        </Box>
-      )}
+          {addresses.length === 0 && !isLoading && (
+            <div className="py-12 text-center">
+              <div className="text-gray-500">
+                <MapPin className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-4 text-lg font-medium">
+                  Nenhum endereço encontrado
+                </h3>
+                <p className="mt-2">
+                  {searchTerm || cityFilter || stateFilter
+                    ? 'Tente ajustar os filtros de busca.'
+                    : 'Não há endereços cadastrados no sistema.'}
+                </p>
+              </div>
+            </div>
+          )}
 
-      {/* Dialog de Visualização */}
-      <Dialog
-        open={isViewDialogOpen}
-        onClose={() => setIsViewDialogOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>Detalhes do Endereço</DialogTitle>
-        <DialogContent>
+          {/* Pagination */}
+          {pagination.last_page > 1 && (
+            <div className="mt-6 flex items-center justify-between">
+              <div className="text-sm text-gray-500">
+                Mostrando {pagination.from} a {pagination.to} de{' '}
+                {pagination.total} endereços
+              </div>
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={pagination.current_page === 1}
+                  onClick={() =>
+                    setPagination(prev => ({
+                      ...prev,
+                      current_page: prev.current_page - 1,
+                    }))
+                  }
+                >
+                  Anterior
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={pagination.current_page === pagination.last_page}
+                  onClick={() =>
+                    setPagination(prev => ({
+                      ...prev,
+                      current_page: prev.current_page + 1,
+                    }))
+                  }
+                >
+                  Próximo
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* View Address Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Endereço</DialogTitle>
+            <DialogDescription>
+              Informações completas do endereço selecionado
+            </DialogDescription>
+          </DialogHeader>
           {selectedAddress && (
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <Typography variant="h6" gutterBottom>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div>
+                <h3 className="mb-4 text-lg font-semibold">
                   Informações do Endereço
-                </Typography>
-                <Typography>
-                  <strong>ID:</strong> {selectedAddress.id}
-                </Typography>
-                <Typography>
-                  <strong>Endereço:</strong> {selectedAddress.address}
-                </Typography>
-                <Typography>
-                  <strong>Número:</strong> {selectedAddress.number}
-                </Typography>
-                {selectedAddress.complement && (
-                  <Typography>
-                    <strong>Complemento:</strong> {selectedAddress.complement}
-                  </Typography>
-                )}
-                <Typography>
-                  <strong>Cidade:</strong> {selectedAddress.city}
-                </Typography>
-                <Typography>
-                  <strong>Estado:</strong> {selectedAddress.state}
-                </Typography>
-                <Typography>
-                  <strong>CEP:</strong> {selectedAddress.zip_code}
-                </Typography>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="h6" gutterBottom>
+                </h3>
+                <div className="space-y-2">
+                  <div>
+                    <strong>ID:</strong> {selectedAddress.id}
+                  </div>
+                  <div>
+                    <strong>Endereço:</strong> {selectedAddress.address}
+                  </div>
+                  <div>
+                    <strong>Número:</strong> {selectedAddress.number}
+                  </div>
+                  {selectedAddress.complement && (
+                    <div>
+                      <strong>Complemento:</strong> {selectedAddress.complement}
+                    </div>
+                  )}
+                  <div>
+                    <strong>Cidade:</strong> {selectedAddress.city}
+                  </div>
+                  <div>
+                    <strong>Estado:</strong> {selectedAddress.state}
+                  </div>
+                  <div>
+                    <strong>CEP:</strong> {selectedAddress.zip_code}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h3 className="mb-4 text-lg font-semibold">
                   Informações do Usuário
-                </Typography>
+                </h3>
                 {selectedAddress.user ? (
-                  <Box>
-                    <Typography>
+                  <div className="space-y-2">
+                    <div>
                       <strong>Nome:</strong> {selectedAddress.user.name}
-                    </Typography>
-                    <Typography>
+                    </div>
+                    <div>
                       <strong>Email:</strong> {selectedAddress.user.email}
-                    </Typography>
-                    <Typography>
+                    </div>
+                    <div>
                       <strong>Telefone:</strong> {selectedAddress.user.phone}
-                    </Typography>
-                  </Box>
+                    </div>
+                  </div>
                 ) : (
-                  <Typography color="textSecondary">
-                    Usuário não encontrado
-                  </Typography>
+                  <div className="text-gray-500">Usuário não encontrado</div>
                 )}
-              </Grid>
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>
+              </div>
+              <div className="md:col-span-2">
+                <h3 className="mb-4 text-lg font-semibold">
                   Endereço Completo
-                </Typography>
-                <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
-                  <Typography>
+                </h3>
+                <div className="rounded-md bg-gray-50 p-4">
+                  <div>
                     {selectedAddress.address}, {selectedAddress.number}
                     {selectedAddress.complement &&
                       `, ${selectedAddress.complement}`}
-                  </Typography>
-                  <Typography>
+                  </div>
+                  <div>
                     {selectedAddress.city} - {selectedAddress.state}
-                  </Typography>
-                  <Typography>CEP: {selectedAddress.zip_code}</Typography>
-                </Paper>
-              </Grid>
-            </Grid>
+                  </div>
+                  <div>CEP: {selectedAddress.zip_code}</div>
+                </div>
+              </div>
+            </div>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsViewDialogOpen(false)}>Fechar</Button>
-        </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 }
