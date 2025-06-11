@@ -177,7 +177,7 @@ export function RegisterForm() {
     mode: 'onChange',
     reValidateMode: 'onChange',
     defaultValues: {
-      role_id: 1,
+      role_id: 2,
       name: '',
       email: '',
       password: '',

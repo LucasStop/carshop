@@ -95,9 +95,20 @@ export function LoginForm() {
 
         // Debug completo do localStorage
         AuthService.debugLocalStorage();
-        // Redirecionar após login bem-sucedido
-        console.log('🔄 Redirecionando para a página inicial...');
-        router.push('/');
+
+        // Verificar se é admin ou employee e redirecionar apropriadamente
+        const currentUser = AuthService.getCurrentUser();
+        const userRole = currentUser?.role?.slug;
+
+        if (userRole === 'admin' || userRole === 'employee') {
+          console.log(
+            '🔄 Usuário administrativo detectado, redirecionando para admin...'
+          );
+          router.push('/admin');
+        } else {
+          console.log('🔄 Redirecionando para a página inicial...');
+          router.push('/');
+        }
 
         // Trigger storage event para atualizar outros componentes
         window.dispatchEvent(

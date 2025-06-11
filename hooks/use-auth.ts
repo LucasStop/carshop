@@ -5,24 +5,38 @@ import { AuthService } from '@/services';
 
 export interface User {
   id: number;
+  role_id: number;
   name: string;
   email: string;
   phone: string;
   cpf: string;
   rg: string;
   birth_date: string;
-  role_id: number;
-  role?: {
+  email_verified_at: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  role: {
     id: number;
     name: string;
     slug: string;
+    description: string | null;
+    permissions: string[] | null;
+    created_at: string;
+    updated_at: string;
   };
-  address?: {
+  address: {
     id: number;
+    user_id: number;
     address: string;
+    number: string;
+    complement?: string;
     city: string;
     state: string;
     zip_code: string;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
   };
 }
 
@@ -77,10 +91,28 @@ export function useAuth() {
     }
   };
 
+  const getRedirectUrl = () => {
+    if (!user?.role?.slug) return '/';
+
+    // Admins e funcionários vão para área administrativa
+    if (user.role.slug === 'admin' || user.role.slug === 'employee') {
+      return '/admin';
+    }
+
+    // Clientes vão para a página inicial
+    return '/';
+  };
+
+  const shouldRedirectToAdmin = () => {
+    return user?.role?.slug === 'admin' || user?.role?.slug === 'employee';
+  };
+
   return {
     user,
     isAuthenticated,
     isLoading,
     logout,
+    getRedirectUrl,
+    shouldRedirectToAdmin,
   };
 }

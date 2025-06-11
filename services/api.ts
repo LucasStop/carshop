@@ -76,6 +76,31 @@ export class ApiService {
     });
   }
 
+  static async postFormData<T>(
+    endpoint: string,
+    formData: FormData
+  ): Promise<T> {
+    const headers: Record<string, string> = {};
+
+    const token = this.getAuthToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${this.baseURL}${endpoint}`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erro na requisição');
+    }
+
+    return response.json();
+  }
+
   static async put<T>(endpoint: string, data?: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PUT',
