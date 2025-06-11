@@ -21,22 +21,22 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
 
-  useEffect(() => {
-    loadStats();
-  }, []);
+  //   useEffect(() => {
+  //     loadStats();
+  //   }, []);
 
-  const loadStats = async () => {
-    try {
-      setIsLoading(true);
-      const data = await AdminService.getStats();
-      setStats(data);
-    } catch (error) {
-      console.error('Erro ao carregar estatísticas:', error);
-      setError('Erro ao carregar estatísticas');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //   const loadStats = async () => {
+  //     try {
+  //       setIsLoading(true);
+  //       const data = await AdminService.getStats();
+  //       setStats(data);
+  //     } catch (error) {
+  //       console.error('Erro ao carregar estatísticas:', error);
+  //       setError('Erro ao carregar estatísticas');
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
 
   if (isLoading) {
     return (

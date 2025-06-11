@@ -62,6 +62,8 @@ export default function UsersPage() {
     last_page: 1,
     per_page: 10,
     total: 0,
+    from: 0,
+    to: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -70,14 +72,13 @@ export default function UsersPage() {
   const [userToEdit, setUserToEdit] = useState<AdminUser | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  const { hasPermission } = usePermissions();
+  const { canManageUsers, canViewUsers } = usePermissions();
   const { setIsLoading: setGlobalLoading, setLoadingMessage } =
     useAdminLoading();
 
   useEffect(() => {
     loadUsers();
   }, [pagination.current_page, searchTerm, selectedRole]);
-
   const loadUsers = async () => {
     try {
       setIsLoading(true);
@@ -88,8 +89,26 @@ export default function UsersPage() {
         role: selectedRole || undefined,
       });
 
-      setUsers(response.data);
-      setPagination(response.meta);
+      console.log('DADOS RECEBIDOS DA API:', response);
+
+      if (response && response.data) {
+        setUsers(response.data);
+
+        // Atualizar paginação com base na resposta da API
+        setPagination({
+          current_page: response.current_page,
+          last_page: response.last_page,
+          per_page: response.per_page,
+          total: response.total,
+          from: response.from,
+          to: response.to,
+        });
+      } else {
+        console.warn(
+          'A resposta da API não continha a estrutura esperada:',
+          response
+        );
+      }
     } catch (error) {
       console.error('Erro ao carregar usuários:', error);
     } finally {
@@ -106,9 +125,8 @@ export default function UsersPage() {
     setSelectedRole(role);
     setPagination(prev => ({ ...prev, current_page: 1 }));
   };
-
   const handleDeleteUser = async () => {
-    if (!userToDelete || !hasPermission(['delete_users'])) return;
+    if (!userToDelete || !canManageUsers()) return;
 
     try {
       setGlobalLoading(true);
@@ -148,17 +166,18 @@ export default function UsersPage() {
       .toUpperCase()
       .slice(0, 2);
   };
-
   const getRoleBadge = (role: string) => {
     switch (role) {
-      case 'super_admin':
-        return <Badge className="bg-red-100 text-red-800">Super Admin</Badge>;
       case 'admin':
-        return <Badge className="bg-blue-100 text-blue-800">Admin</Badge>;
-      case 'manager':
-        return <Badge className="bg-green-100 text-green-800">Gerente</Badge>;
+        return (
+          <Badge className="bg-blue-100 text-blue-800">Administrador</Badge>
+        );
       case 'client':
         return <Badge variant="outline">Cliente</Badge>;
+      case 'employee':
+        return (
+          <Badge className="bg-green-100 text-green-800">Funcionário</Badge>
+        );
       default:
         return <Badge variant="outline">{role}</Badge>;
     }
@@ -203,8 +222,8 @@ export default function UsersPage() {
           <p className="mt-2 text-gray-600">
             Gerencie todos os usuários do sistema
           </p>
-        </div>
-        {hasPermission(['create_users']) && (
+        </div>{' '}
+        {canManageUsers() && (
           <Button onClick={handleCreateUser}>
             <UserPlus className="mr-2 h-4 w-4" />
             Novo Usuário
@@ -264,7 +283,7 @@ export default function UsersPage() {
                 <TableHead>Telefone</TableHead>
                 <TableHead>Cidade</TableHead>
                 <TableHead>Criado em</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -306,8 +325,8 @@ export default function UsersPage() {
                         <DropdownMenuItem>
                           <Eye className="mr-2 h-4 w-4" />
                           Ver detalhes
-                        </DropdownMenuItem>
-                        {hasPermission(['edit_users']) && (
+                        </DropdownMenuItem>{' '}
+                        {canManageUsers() && (
                           <DropdownMenuItem
                             onClick={() => handleEditUser(user)}
                           >
@@ -316,7 +335,7 @@ export default function UsersPage() {
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
-                        {hasPermission(['delete_users']) && (
+                        {canManageUsers() && (
                           <DropdownMenuItem
                             className="text-red-600"
                             onClick={() => setUserToDelete(user)}

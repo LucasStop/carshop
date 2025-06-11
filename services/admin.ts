@@ -140,18 +140,20 @@ export interface AdminStats {
   active_listings: number;
 }
 
-export interface PaginationMeta {
+export interface AdminListResponse<T> {
+  data: T[];
   current_page: number;
   last_page: number;
   per_page: number;
   total: number;
   from: number;
   to: number;
-}
-
-export interface AdminListResponse<T> {
-  data: T[];
-  meta: PaginationMeta;
+  links: {
+    first: string;
+    last: string;
+    prev: string | null;
+    next: string | null;
+  };
 }
 
 export interface CreateUserRequest {
@@ -262,7 +264,7 @@ export interface UpdateSaleRequest {
 export class AdminService {
   // Stats
   static async getStats(): Promise<AdminStats> {
-    return ApiService.get<AdminStats>('/admin/stats');
+    return ApiService.get<AdminStats>('/stats');
   }
 
   // Users
@@ -280,27 +282,27 @@ export class AdminService {
     if (params?.search) queryParams.append('search', params.search);
     if (params?.role) queryParams.append('role', params.role);
     if (params?.status) queryParams.append('status', params.status);
-    const url = `/admin/users${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const url = `/users${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return ApiService.get<AdminListResponse<AdminUser>>(url);
   }
 
   static async getUser(id: number): Promise<AdminUser> {
-    return ApiService.get<AdminUser>(`/admin/users/${id}`);
+    return ApiService.get<AdminUser>(`/users/${id}`);
   }
 
   static async createUser(data: CreateUserRequest): Promise<AdminUser> {
-    return ApiService.post<AdminUser>('/admin/users', data);
+    return ApiService.post<AdminUser>('/users', data);
   }
 
   static async updateUser(
     id: number,
     data: UpdateUserRequest
   ): Promise<AdminUser> {
-    return ApiService.put<AdminUser>(`/admin/users/${id}`, data);
+    return ApiService.put<AdminUser>(`/users/${id}`, data);
   }
 
   static async deleteUser(id: number): Promise<void> {
-    return ApiService.delete(`/admin/users/${id}`);
+    return ApiService.delete(`/users/${id}`);
   }
 
   // Cars
@@ -322,12 +324,12 @@ export class AdminService {
     if (params?.model) queryParams.append('model', params.model);
     if (params?.status) queryParams.append('status', params.status);
     if (params?.user) queryParams.append('user', params.user);
-    const url = `/admin/cars${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const url = `/cars${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return ApiService.get<AdminListResponse<AdminCar>>(url);
   }
 
   static async getCar(id: number): Promise<AdminCar> {
-    return ApiService.get<AdminCar>(`/admin/cars/${id}`);
+    return ApiService.get<AdminCar>(`/cars/${id}`);
   }
 
   static async createCar(data: CreateCarRequest): Promise<AdminCar> {
@@ -347,21 +349,21 @@ export class AdminService {
         formData.append(`images[${index}]`, image);
       });
 
-      return ApiService.postFormData<AdminCar>('/admin/cars', formData);
+      return ApiService.postFormData<AdminCar>('/cars', formData);
     }
 
-    return ApiService.post<AdminCar>('/admin/cars', data);
+    return ApiService.post<AdminCar>('/cars', data);
   }
 
   static async updateCar(
     id: number,
     data: UpdateCarRequest
   ): Promise<AdminCar> {
-    return ApiService.put<AdminCar>(`/admin/cars/${id}`, data);
+    return ApiService.put<AdminCar>(`/cars/${id}`, data);
   }
 
   static async deleteCar(id: number): Promise<void> {
-    return ApiService.delete(`/admin/cars/${id}`);
+    return ApiService.delete(`/cars/${id}`);
   }
 
   // Brands
@@ -375,27 +377,27 @@ export class AdminService {
     if (params?.per_page)
       queryParams.append('per_page', params.per_page.toString());
     if (params?.search) queryParams.append('search', params.search);
-    const url = `/admin/brands${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const url = `/brands${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return ApiService.get<AdminListResponse<AdminBrand>>(url);
   }
 
   static async getBrand(id: number): Promise<AdminBrand> {
-    return ApiService.get<AdminBrand>(`/admin/brands/${id}`);
+    return ApiService.get<AdminBrand>(`/brands/${id}`);
   }
 
   static async createBrand(data: CreateBrandRequest): Promise<AdminBrand> {
-    return ApiService.post<AdminBrand>('/admin/brands', data);
+    return ApiService.post<AdminBrand>('/brands', data);
   }
 
   static async updateBrand(
     id: number,
     data: UpdateBrandRequest
   ): Promise<AdminBrand> {
-    return ApiService.put<AdminBrand>(`/admin/brands/${id}`, data);
+    return ApiService.put<AdminBrand>(`/brands/${id}`, data);
   }
 
   static async deleteBrand(id: number): Promise<void> {
-    return ApiService.delete(`/admin/brands/${id}`);
+    return ApiService.delete(`/brands/${id}`);
   }
 
   // Models
@@ -411,27 +413,27 @@ export class AdminService {
       queryParams.append('per_page', params.per_page.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.brand) queryParams.append('brand', params.brand);
-    const url = `/admin/models${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const url = `/models${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return ApiService.get<AdminListResponse<AdminModel>>(url);
   }
 
   static async getModel(id: number): Promise<AdminModel> {
-    return ApiService.get<AdminModel>(`/admin/models/${id}`);
+    return ApiService.get<AdminModel>(`/models/${id}`);
   }
 
   static async createModel(data: CreateModelRequest): Promise<AdminModel> {
-    return ApiService.post<AdminModel>('/admin/models', data);
+    return ApiService.post<AdminModel>('/models', data);
   }
 
   static async updateModel(
     id: number,
     data: UpdateModelRequest
   ): Promise<AdminModel> {
-    return ApiService.put<AdminModel>(`/admin/models/${id}`, data);
+    return ApiService.put<AdminModel>(`/models/${id}`, data);
   }
 
   static async deleteModel(id: number): Promise<void> {
-    return ApiService.delete(`/admin/models/${id}`);
+    return ApiService.delete(`/models/${id}`);
   }
 
   // Sales
@@ -451,27 +453,27 @@ export class AdminService {
     if (params?.status) queryParams.append('status', params.status);
     if (params?.date_from) queryParams.append('date_from', params.date_from);
     if (params?.date_to) queryParams.append('date_to', params.date_to);
-    const url = `/admin/sales${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const url = `/sales${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return ApiService.get<AdminListResponse<AdminSale>>(url);
   }
 
   static async getSale(id: number): Promise<AdminSale> {
-    return ApiService.get<AdminSale>(`/admin/sales/${id}`);
+    return ApiService.get<AdminSale>(`/sales/${id}`);
   }
 
   static async createSale(data: CreateSaleRequest): Promise<AdminSale> {
-    return ApiService.post<AdminSale>('/admin/sales', data);
+    return ApiService.post<AdminSale>('/sales', data);
   }
 
   static async updateSale(
     id: number,
     data: UpdateSaleRequest
   ): Promise<AdminSale> {
-    return ApiService.put<AdminSale>(`/admin/sales/${id}`, data);
+    return ApiService.put<AdminSale>(`/sales/${id}`, data);
   }
 
   static async deleteSale(id: number): Promise<void> {
-    return ApiService.delete(`/admin/sales/${id}`);
+    return ApiService.delete(`/sales/${id}`);
   }
 
   // Addresses
@@ -489,21 +491,21 @@ export class AdminService {
     if (params?.search) queryParams.append('search', params.search);
     if (params?.city) queryParams.append('city', params.city);
     if (params?.state) queryParams.append('state', params.state);
-    const url = `/admin/addresses${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const url = `/addresses${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return ApiService.get<AdminListResponse<AdminAddress>>(url);
   }
 
   static async getAddress(id: number): Promise<AdminAddress> {
-    return ApiService.get<AdminAddress>(`/admin/addresses/${id}`);
+    return ApiService.get<AdminAddress>(`/addresses/${id}`);
   }
 
   // Roles & Permissions
   static async getRoles(): Promise<AdminRole[]> {
-    return ApiService.get<AdminRole[]>('/admin/roles');
+    return ApiService.get<AdminRole[]>('/roles');
   }
 
   static async getRole(id: number): Promise<AdminRole> {
-    return ApiService.get<AdminRole>(`/admin/roles/${id}`);
+    return ApiService.get<AdminRole>(`/roles/${id}`);
   }
 
   // Verificação de permissões
