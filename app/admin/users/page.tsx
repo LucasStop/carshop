@@ -283,7 +283,7 @@ export default function UsersPage() {
                 <TableHead>Telefone</TableHead>
                 <TableHead>Cidade</TableHead>
                 <TableHead>Criado em</TableHead>
-                <TableHead>Ações</TableHead>
+                <TableHead className="text-center">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -313,7 +313,7 @@ export default function UsersPage() {
                       : '-'}
                   </TableCell>
                   <TableCell>{formatDate(user.created_at)}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-center">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
