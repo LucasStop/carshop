@@ -348,7 +348,7 @@ export default function CarsPage() {
                 <TableHead>Ano</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Data de Inclusão</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>{' '}
             <TableBody>
@@ -378,7 +378,7 @@ export default function CarsPage() {
                   <TableCell>{car.manufacture_year}</TableCell>
                   <TableCell>{getStatusBadge(car.status)}</TableCell>
                   <TableCell>{formatDate(car.inclusion_date)}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
