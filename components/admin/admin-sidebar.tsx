@@ -21,12 +21,12 @@ import {
 import { usePermissions } from '@/hooks/use-permissions';
 
 const navigation = [
-  {
-    name: 'Dashboard',
-    href: '/admin',
-    icon: LayoutDashboard,
-    permissions: [],
-  },
+  // {
+  //   name: 'Dashboard',
+  //   href: '/admin',
+  //   icon: LayoutDashboard,
+  //   permissions: [],
+  // },
   {
     name: 'Usuários',
     href: '/admin/users',
