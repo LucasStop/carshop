@@ -53,16 +53,18 @@ export function AdminHeader() {
       .slice(0, 2);
   };
 
-  const getRoleColor = (role: string) => {
+  const getRoleBadge = (role: string) => {
     switch (role) {
-      case 'super_admin':
-        return 'bg-red-100 text-red-800';
       case 'admin':
-        return 'bg-blue-100 text-blue-800';
-      case 'manager':
-        return 'bg-green-100 text-green-800';
+        return <Badge className="bg-red-100 text-red-800">Administrador</Badge>;
+      case 'client':
+        return <Badge className="bg-blue-100 text-blue-800">Cliente</Badge>;
+      case 'employee':
+        return (
+          <Badge className="bg-green-100 text-green-800">Funcionário</Badge>
+        );
       default:
-        return 'bg-gray-100 text-gray-800';
+        return <Badge variant="outline">{getRoleName(role)}</Badge>;
     }
   };
 
@@ -127,9 +129,7 @@ export function AdminHeader() {
                     {user.name}
                   </p>
                   {userRole && (
-                    <Badge className={getRoleColor(userRole)}>
-                      {getRoleName(userRole)}
-                    </Badge>
+                    <div className="ml-2">{getRoleBadge(userRole)}</div>
                   )}
                 </div>
                 <p className="text-xs leading-none text-muted-foreground">
