@@ -203,6 +203,7 @@ export default function UsersPage() {
       .toUpperCase()
       .slice(0, 2);
   };
+
   const getRoleBadge = (role: string) => {
     switch (role) {
       case 'admin':
