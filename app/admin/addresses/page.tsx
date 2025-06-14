@@ -86,10 +86,17 @@ export default function AdminAddressesPage() {
     'SE',
     'TO',
   ];
-
   useEffect(() => {
     loadAddresses();
   }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadAddresses();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, cityFilter, stateFilter, pagination.current_page]);
 
   const loadAddresses = async () => {
     try {
@@ -119,7 +126,6 @@ export default function AdminAddressesPage() {
       setIsLoading(false);
     }
   };
-
   const handleSearch = (value: string) => {
     setSearchTerm(value);
     setPagination(prev => ({ ...prev, current_page: 1 }));
@@ -132,6 +138,13 @@ export default function AdminAddressesPage() {
 
   const handleStateFilter = (state: string) => {
     setStateFilter(state);
+    setPagination(prev => ({ ...prev, current_page: 1 }));
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setCityFilter('');
+    setStateFilter('');
     setPagination(prev => ({ ...prev, current_page: 1 }));
   };
 
@@ -184,7 +197,7 @@ export default function AdminAddressesPage() {
           <CardDescription>
             Use os filtros abaixo para encontrar endereços específicos
           </CardDescription>
-        </CardHeader>
+        </CardHeader>{' '}
         <CardContent>
           <div className="flex flex-col space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
             <div className="flex-1">
@@ -198,6 +211,7 @@ export default function AdminAddressesPage() {
                 />
               </div>
             </div>
+            {/*
             <div className="w-full sm:w-48">
               <Input
                 placeholder="Filtrar por cidade"
@@ -206,20 +220,27 @@ export default function AdminAddressesPage() {
               />
             </div>
             <div className="w-full sm:w-48">
-              {/* <Select value={stateFilter} onValueChange={handleStateFilter}>
+              <Select value={stateFilter} onValueChange={handleStateFilter}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione um estado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os estados</SelectItem>
+                  <SelectItem value="all">Todos os estados</SelectItem>{' '}
                   {brazilianStates.map(state => (
                     <SelectItem key={state} value={state}>
                       {state}
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select> */}
+              </Select>
             </div>
+            <Button
+              variant="outline"
+              onClick={clearFilters}
+              className="whitespace-nowrap"
+            >
+              Limpar Filtros
+            </Button> */}
           </div>
         </CardContent>
       </Card>
@@ -252,7 +273,19 @@ export default function AdminAddressesPage() {
               ) : addresses.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center">
-                    Nenhum endereço encontrado
+                    <div className="py-12 text-center">
+                      <div className="text-gray-500">
+                        <MapPin className="mx-auto h-12 w-12 text-gray-400" />
+                        <h3 className="mt-4 text-lg font-medium">
+                          Nenhum endereço encontrado
+                        </h3>
+                        <p className="mt-2">
+                          {searchTerm || cityFilter || stateFilter
+                            ? 'Tente ajustar os filtros de busca.'
+                            : 'Não há endereços cadastrados no sistema.'}
+                        </p>
+                      </div>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -321,22 +354,6 @@ export default function AdminAddressesPage() {
             </TableBody>
           </Table>
 
-          {addresses.length === 0 && !isLoading && (
-            <div className="py-12 text-center">
-              <div className="text-gray-500">
-                <MapPin className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-4 text-lg font-medium">
-                  Nenhum endereço encontrado
-                </h3>
-                <p className="mt-2">
-                  {searchTerm || cityFilter || stateFilter
-                    ? 'Tente ajustar os filtros de busca.'
-                    : 'Não há endereços cadastrados no sistema.'}
-                </p>
-              </div>
-            </div>
-          )}
-
           {/* Pagination */}
           {pagination.last_page > 1 && (
             <div className="mt-6 flex items-center justify-between">
@@ -345,10 +362,11 @@ export default function AdminAddressesPage() {
                 {pagination.total} endereços
               </div>
               <div className="flex space-x-2">
+                {' '}
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={pagination.current_page === 1}
+                  disabled={pagination.current_page === 1 || isLoading}
                   onClick={() =>
                     setPagination(prev => ({
                       ...prev,
@@ -358,10 +376,16 @@ export default function AdminAddressesPage() {
                 >
                   Anterior
                 </Button>
+                <span className="text-sm text-gray-500">
+                  Página {pagination.current_page} de {pagination.last_page}
+                </span>
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={pagination.current_page === pagination.last_page}
+                  disabled={
+                    pagination.current_page === pagination.last_page ||
+                    isLoading
+                  }
                   onClick={() =>
                     setPagination(prev => ({
                       ...prev,
