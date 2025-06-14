@@ -39,18 +39,18 @@ const navigation = [
     icon: Car,
     permissions: ['view_cars'],
   },
-  {
-    name: 'Marcas',
-    href: '/admin/brands',
-    icon: Package,
-    permissions: ['view_brands'],
-  },
-  {
-    name: 'Modelos',
-    href: '/admin/models',
-    icon: ShoppingCart,
-    permissions: ['view_models'],
-  },
+  // {
+  //   name: 'Marcas',
+  //   href: '/admin/brands',
+  //   icon: Package,
+  //   permissions: ['view_brands'],
+  // },
+  // {
+  //   name: 'Modelos',
+  //   href: '/admin/models',
+  //   icon: ShoppingCart,
+  //   permissions: ['view_models'],
+  // },
   {
     name: 'Vendas',
     href: '/admin/sales',
