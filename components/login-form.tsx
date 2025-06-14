@@ -104,7 +104,7 @@ export function LoginForm() {
           console.log(
             '🔄 Usuário administrativo detectado, redirecionando para admin...'
           );
-          router.push('/admin');
+          router.push('/admin/users');
         } else {
           console.log('🔄 Redirecionando para a página inicial...');
           router.push('/');
