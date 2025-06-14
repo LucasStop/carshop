@@ -33,6 +33,7 @@ import {
 import {
   AdminService,
   AdminUser,
+  AdminRole,
   CreateUserRequest,
   UpdateUserRequest,
 } from '@/services/admin';
@@ -84,13 +85,6 @@ interface UserFormDialogProps {
   onSuccess: () => void;
 }
 
-const roles = [
-  { id: 1, name: 'Cliente', slug: 'client' },
-  { id: 2, name: 'Gerente', slug: 'manager' },
-  { id: 3, name: 'Administrador', slug: 'admin' },
-  { id: 4, name: 'Super Admin', slug: 'super_admin' },
-];
-
 export function UserFormDialog({
   user,
   open,
@@ -99,6 +93,8 @@ export function UserFormDialog({
 }: UserFormDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
+  const [roles, setRoles] = useState<AdminRole[]>([]);
+  const [isLoadingRoles, setIsLoadingRoles] = useState(false);
   const { setIsLoading, setLoadingMessage } = useAdminLoading();
 
   const form = useForm<UserFormData>({
@@ -123,6 +119,38 @@ export function UserFormDialog({
       },
     },
   });
+
+  // Carregar roles do backend
+  useEffect(() => {
+    const loadRoles = async () => {
+      try {
+        setIsLoadingRoles(true);
+        const rolesData = await AdminService.getRoles();
+        setRoles(rolesData);
+      } catch (error) {
+        console.error('Erro ao carregar roles:', error);
+      } finally {
+        setIsLoadingRoles(false);
+      }
+    };
+
+    if (open) {
+      loadRoles();
+    }
+  }, [open]);
+
+  const getRoleName = (slug: string) => {
+    switch (slug) {
+      case 'admin':
+        return 'Administrador';
+      case 'employee':
+        return 'Funcionário';
+      case 'client':
+        return 'Cliente';
+      default:
+        return slug;
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -458,10 +486,17 @@ export function UserFormDialog({
                       <Select
                         onValueChange={value => field.onChange(parseInt(value))}
                         value={field.value?.toString()}
+                        disabled={isLoadingRoles}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione a função" />
+                            <SelectValue
+                              placeholder={
+                                isLoadingRoles
+                                  ? 'Carregando funções...'
+                                  : 'Selecione a função'
+                              }
+                            />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -470,7 +505,7 @@ export function UserFormDialog({
                               key={role.id}
                               value={role.id.toString()}
                             >
-                              {role.name}
+                              {getRoleName(role.slug)}
                             </SelectItem>
                           ))}
                         </SelectContent>

@@ -20,8 +20,17 @@ import { usePermissions } from '@/hooks/use-permissions';
 export function AdminHeader() {
   const router = useRouter();
   const { user, logout } = useAuth();
-  const { userRole } = usePermissions();
+  const permissions = usePermissions();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const getUserRole = () => {
+    if (permissions.hasRole(['super_admin'])) return 'super_admin';
+    if (permissions.hasRole(['admin'])) return 'admin';
+    if (permissions.hasRole(['manager'])) return 'manager';
+    return 'user';
+  };
+
+  const userRole = getUserRole();
 
   const handleLogout = async () => {
     setIsLoggingOut(true);

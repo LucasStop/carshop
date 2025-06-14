@@ -1,7 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AdminService, AdminUser, AdminListResponse } from '@/services/admin';
+import {
+  AdminService,
+  AdminUser,
+  AdminListResponse,
+  AdminRole,
+} from '@/services/admin';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -57,6 +62,8 @@ import { ptBR } from 'date-fns/locale';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [roles, setRoles] = useState<AdminRole[]>([]);
+  const [isLoadingRoles, setIsLoadingRoles] = useState(true);
   const [pagination, setPagination] = useState({
     current_page: 1,
     last_page: 1,
@@ -71,14 +78,31 @@ export default function UsersPage() {
   const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
   const [userToEdit, setUserToEdit] = useState<AdminUser | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-
   const { canManageUsers, canViewUsers } = usePermissions();
   const { setIsLoading: setGlobalLoading, setLoadingMessage } =
     useAdminLoading();
 
+  // Carregar roles no primeiro carregamento
+  useEffect(() => {
+    loadRoles();
+  }, []);
+
   useEffect(() => {
     loadUsers();
   }, [pagination.current_page, searchTerm, selectedRole]);
+
+  const loadRoles = async () => {
+    try {
+      setIsLoadingRoles(true);
+      const rolesData = await AdminService.getRoles();
+      setRoles(rolesData);
+    } catch (error) {
+      console.error('Erro ao carregar roles:', error);
+    } finally {
+      setIsLoadingRoles(false);
+    }
+  };
+
   const loadUsers = async () => {
     try {
       setIsLoading(true);
@@ -120,11 +144,24 @@ export default function UsersPage() {
     setSearchTerm(value);
     setPagination(prev => ({ ...prev, current_page: 1 }));
   };
-
   const handleRoleFilter = (role: string) => {
     setSelectedRole(role);
     setPagination(prev => ({ ...prev, current_page: 1 }));
   };
+
+  const getRoleName = (slug: string) => {
+    switch (slug) {
+      case 'admin':
+        return 'Administrador';
+      case 'employee':
+        return 'Funcionário';
+      case 'client':
+        return 'Cliente';
+      default:
+        return slug;
+    }
+  };
+
   const handleDeleteUser = async () => {
     if (!userToDelete || !canManageUsers()) return;
 
@@ -169,17 +206,15 @@ export default function UsersPage() {
   const getRoleBadge = (role: string) => {
     switch (role) {
       case 'admin':
-        return (
-          <Badge className="bg-blue-100 text-blue-800">Administrador</Badge>
-        );
+        return <Badge className="bg-red-100 text-red-800">Administrador</Badge>;
       case 'client':
-        return <Badge variant="outline">Cliente</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800">Cliente</Badge>;
       case 'employee':
         return (
           <Badge className="bg-green-100 text-green-800">Funcionário</Badge>
         );
       default:
-        return <Badge variant="outline">{role}</Badge>;
+        return <Badge variant="outline">{getRoleName(role)}</Badge>;
     }
   };
 
@@ -251,18 +286,22 @@ export default function UsersPage() {
                   className="pl-10"
                 />
               </div>
-            </div>
+            </div>{' '}
             <div className="w-full sm:w-48">
               <select
                 value={selectedRole}
                 onChange={e => handleRoleFilter(e.target.value)}
                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+                disabled={isLoadingRoles}
               >
-                <option value="">Todas as funções</option>
-                <option value="super_admin">Super Admin</option>
-                <option value="admin">Admin</option>
-                <option value="manager">Gerente</option>
-                <option value="client">Cliente</option>
+                <option value="">
+                  {isLoadingRoles ? 'Carregando...' : 'Todas as funções'}
+                </option>
+                {roles.map(role => (
+                  <option key={role.id} value={role.slug}>
+                    {getRoleName(role.slug)}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

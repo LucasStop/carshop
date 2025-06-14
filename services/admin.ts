@@ -513,14 +513,21 @@ export class AdminService {
     userRole: string,
     requiredPermissions: string[]
   ): boolean {
-    // Super admin tem todas as permissões
+    // Admin tem todas as permissões
     if (userRole === 'admin') {
-      return true;
+      return true; // Super admin tem todas as permissões
     }
 
-    // Funcionário tem permissões limitadas
     if (userRole === 'employee') {
-      const employeePermissions = ['view_users', 'view_cars', 'view_sales'];
+      const employeePermissions = [
+        'view_users',
+        'view_cars',
+        'view_sales',
+        'view_brands',
+        'view_models',
+        'manage_sales',
+        'manage_cars',
+      ];
       return requiredPermissions.some(permission =>
         employeePermissions.includes(permission)
       );
@@ -531,6 +538,6 @@ export class AdminService {
   }
 
   static canAccessAdmin(userRole: string): boolean {
-    return ['admin', 'client', 'employee'].includes(userRole);
+    return ['admin', 'employee'].includes(userRole);
   }
 }

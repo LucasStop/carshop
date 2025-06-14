@@ -18,13 +18,27 @@ export function usePermissions() {
   const hasPermission = (permission: string): boolean => {
     if (!user?.role) return false;
 
-    // Super admin tem todas as permissões
+    // Admin tem todas as permissões
     if (user.role.slug === 'admin') {
       return true;
     }
 
-    // Verifica se a role tem a permissão específica
-    return user.role.permissions?.includes(permission) || false;
+    // Employee tem permissões específicas
+    if (user.role.slug === 'employee') {
+      const employeePermissions = [
+        'view_users',
+        'view_cars',
+        'view_sales',
+        'manage_cars',
+        'view_brands',
+        'view_models',
+        'manage_sales',
+      ];
+      return employeePermissions.includes(permission);
+    }
+
+    // Client não tem permissões administrativas
+    return false;
   };
 
   const canAccessAdmin = (): boolean => {
@@ -33,58 +47,51 @@ export function usePermissions() {
   };
 
   const canManageUsers = (): boolean => {
-    return hasPermission('manage_users') || user?.role?.slug === 'admin';
+    return user?.role?.slug === 'admin';
   };
 
   const canManageCars = (): boolean => {
-    return hasPermission('manage_cars') || user?.role?.slug === 'admin';
+    return ['admin', 'employee'].includes(user?.role?.slug || '');
   };
+
   const canManageBrands = (): boolean => {
-    return hasPermission('manage_brands') || user?.role?.slug === 'admin';
+    return user?.role?.slug === 'admin';
   };
 
   const canManageModels = (): boolean => {
-    return hasPermission('manage_models') || user?.role?.slug === 'admin';
+    return user?.role?.slug === 'admin';
   };
 
   const canViewBrands = (): boolean => {
-    return (
-      hasPermission('view_brands') ||
-      canManageBrands() ||
-      user?.role?.slug === 'employee'
-    );
+    return ['admin', 'employee'].includes(user?.role?.slug || '');
   };
 
   const canViewModels = (): boolean => {
-    return (
-      hasPermission('view_models') ||
-      canManageModels() ||
-      user?.role?.slug === 'employee'
-    );
+    return ['admin', 'employee'].includes(user?.role?.slug || '');
   };
 
   const canManageSales = (): boolean => {
-    return hasPermission('manage_sales') || user?.role?.slug === 'admin';
+    return ['admin', 'employee'].includes(user?.role?.slug || '');
   };
 
   const canViewUsers = (): boolean => {
-    return hasPermission('view_users') || canManageUsers();
+    return ['admin', 'employee'].includes(user?.role?.slug || '');
   };
 
   const canViewCars = (): boolean => {
-    return hasPermission('view_cars') || canManageCars();
+    return ['admin', 'employee'].includes(user?.role?.slug || '');
   };
 
   const canViewSales = (): boolean => {
-    return hasPermission('view_sales') || canManageSales();
+    return ['admin', 'employee'].includes(user?.role?.slug || '');
   };
 
   const canViewAddresses = (): boolean => {
-    return hasPermission('view_addresses') || user?.role?.slug === 'admin';
+    return user?.role?.slug === 'admin';
   };
 
   const canViewStats = (): boolean => {
-    return hasPermission('view_stats') || user?.role?.slug === 'admin';
+    return ['admin', 'employee'].includes(user?.role?.slug || '');
   };
 
   const isAdmin = (): boolean => {
@@ -98,6 +105,7 @@ export function usePermissions() {
   const isClient = (): boolean => {
     return user?.role?.slug === 'client';
   };
+
   return {
     user,
     hasRole,
