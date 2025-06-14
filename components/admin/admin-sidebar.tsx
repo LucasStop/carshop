@@ -63,12 +63,12 @@ const navigation = [
     icon: MapPin,
     permissions: ['view_addresses'],
   },
-  {
-    name: 'Configurações',
-    href: '/admin/settings',
-    icon: Settings,
-    permissions: ['manage_settings'],
-  },
+  // {
+  //   name: 'Configurações',
+  //   href: '/admin/settings',
+  //   icon: Settings,
+  //   permissions: ['manage_settings'],
+  // },
 ];
 
 export function AdminSidebar() {
