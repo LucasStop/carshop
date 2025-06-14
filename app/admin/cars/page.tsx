@@ -1,7 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AdminService, AdminCar, AdminListResponse } from '@/services/admin';
+import {
+  AdminService,
+  AdminCar,
+  AdminListResponse,
+  AdminBrand,
+} from '@/services/admin';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -56,11 +61,15 @@ import { ptBR } from 'date-fns/locale';
 
 export default function CarsPage() {
   const [cars, setCars] = useState<AdminCar[]>([]);
+  const [brands, setBrands] = useState<AdminBrand[]>([]);
+  const [isLoadingBrands, setIsLoadingBrands] = useState(true);
   const [pagination, setPagination] = useState({
     current_page: 1,
     last_page: 1,
     per_page: 10,
     total: 0,
+    from: 0,
+    to: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -69,14 +78,30 @@ export default function CarsPage() {
   const [carToDelete, setCarToDelete] = useState<AdminCar | null>(null);
   const [carToEdit, setCarToEdit] = useState<AdminCar | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-
-  const { hasPermission } = usePermissions();
+  const { canManageCars, canViewCars } = usePermissions();
   const { setIsLoading: setGlobalLoading, setLoadingMessage } =
     useAdminLoading();
+
+  // Carregar marcas no primeiro carregamento
+  useEffect(() => {
+    loadBrands();
+  }, []);
 
   useEffect(() => {
     loadCars();
   }, [pagination.current_page, searchTerm, selectedStatus, selectedBrand]);
+
+  const loadBrands = async () => {
+    try {
+      setIsLoadingBrands(true);
+      const response = await AdminService.getBrands();
+      setBrands(response.data);
+    } catch (error) {
+      console.error('Erro ao carregar marcas:', error);
+    } finally {
+      setIsLoadingBrands(false);
+    }
+  };
 
   const loadCars = async () => {
     try {
@@ -88,9 +113,17 @@ export default function CarsPage() {
         status: selectedStatus || undefined,
         brand: selectedBrand || undefined,
       });
-
       setCars(response.data);
-      setPagination(response.meta);
+
+      // Atualizar paginação com base na resposta da API
+      setPagination({
+        current_page: response.current_page,
+        last_page: response.last_page,
+        per_page: response.per_page,
+        total: response.total,
+        from: response.from,
+        to: response.to,
+      });
     } catch (error) {
       console.error('Erro ao carregar veículos:', error);
     } finally {
@@ -112,9 +145,8 @@ export default function CarsPage() {
     setSelectedBrand(brand);
     setPagination(prev => ({ ...prev, current_page: 1 }));
   };
-
   const handleDeleteCar = async () => {
-    if (!carToDelete || !hasPermission(['delete_cars'])) return;
+    if (!carToDelete || !canManageCars()) return;
 
     try {
       setGlobalLoading(true);
@@ -145,7 +177,6 @@ export default function CarsPage() {
     setCarToEdit(null);
     loadCars();
   };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
@@ -156,6 +187,19 @@ export default function CarsPage() {
         return <Badge className="bg-blue-100 text-blue-800">Vendido</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const getStatusName = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'Ativo';
+      case 'inactive':
+        return 'Inativo';
+      case 'sold':
+        return 'Vendido';
+      default:
+        return status;
     }
   };
 
@@ -173,7 +217,6 @@ export default function CarsPage() {
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), 'dd/MM/yyyy', { locale: ptBR });
   };
-
   if (isLoading && cars.length === 0) {
     return (
       <div className="space-y-6">
@@ -209,8 +252,8 @@ export default function CarsPage() {
           <p className="mt-2 text-gray-600">
             Gerencie todos os veículos anunciados
           </p>
-        </div>
-        {hasPermission(['create_cars']) && (
+        </div>{' '}
+        {canManageCars() && (
           <Button onClick={handleCreateCar}>
             <Plus className="mr-2 h-4 w-4" />
             Novo Veículo
@@ -238,7 +281,7 @@ export default function CarsPage() {
                   className="pl-10"
                 />
               </div>
-            </div>
+            </div>{' '}
             <div className="w-full sm:w-48">
               <select
                 value={selectedStatus}
@@ -256,13 +299,16 @@ export default function CarsPage() {
                 value={selectedBrand}
                 onChange={e => handleBrandFilter(e.target.value)}
                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+                disabled={isLoadingBrands}
               >
-                <option value="">Todas as marcas</option>
-                <option value="1">Toyota</option>
-                <option value="2">Honda</option>
-                <option value="3">Volkswagen</option>
-                <option value="4">Chevrolet</option>
-                <option value="5">Ford</option>
+                <option value="">
+                  {isLoadingBrands ? 'Carregando...' : 'Todas as marcas'}
+                </option>
+                {/* {brands.map(brand => (
+                  <option key={brand.id} value={brand.id.toString()}>
+                    {brand.name}
+                  </option>
+                ))} */}
               </select>
             </div>
           </div>
@@ -307,7 +353,7 @@ export default function CarsPage() {
                     </div>
                   </TableCell>
                   <TableCell className="font-medium">
-                    {formatCurrency(car.price)}
+                    {car.price ? formatCurrency(car.price) : 'Em avaliação'}
                   </TableCell>
                   <TableCell>{formatMileage(car.mileage)}</TableCell>
                   <TableCell>{car.year}</TableCell>
@@ -337,15 +383,15 @@ export default function CarsPage() {
                         <DropdownMenuItem>
                           <Eye className="mr-2 h-4 w-4" />
                           Ver detalhes
-                        </DropdownMenuItem>
-                        {hasPermission(['edit_cars']) && (
+                        </DropdownMenuItem>{' '}
+                        {canManageCars() && (
                           <DropdownMenuItem onClick={() => handleEditCar(car)}>
                             <Edit className="mr-2 h-4 w-4" />
                             Editar
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
-                        {hasPermission(['delete_cars']) && (
+                        {canManageCars() && (
                           <DropdownMenuItem
                             className="text-red-600"
                             onClick={() => setCarToDelete(car)}
