@@ -104,17 +104,17 @@ export interface AdminCar {
 export interface AdminSale {
   id: number;
   car_id: number;
-  buyer_id: number;
-  seller_id: number;
-  price: number;
-  status: 'pending' | 'completed' | 'cancelled';
+  customer_user_id: number;
+  employee_user_id: number;
   sale_date: string;
+  final_price: string;
   notes?: string;
-  car?: AdminCar;
-  buyer?: AdminUser;
-  seller?: AdminUser;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
+  car?: AdminCar;
+  customer?: AdminUser;
+  employee?: AdminUser;
 }
 
 export interface AdminRole {
@@ -245,15 +245,19 @@ export interface UpdateModelRequest {
 
 export interface CreateSaleRequest {
   car_id: number;
-  buyer_id: number;
-  seller_id: number;
-  price: number;
+  customer_user_id: number;
+  employee_user_id: number;
+  sale_date: string;
+  final_price: string;
   notes?: string;
 }
 
 export interface UpdateSaleRequest {
-  price?: number;
-  status?: 'pending' | 'completed' | 'cancelled';
+  car_id?: number;
+  customer_user_id?: number;
+  employee_user_id?: number;
+  sale_date?: string;
+  final_price?: string;
   notes?: string;
 }
 
@@ -435,7 +439,6 @@ export class AdminService {
   static async deleteModel(id: number): Promise<void> {
     return ApiService.delete(`/models/${id}`);
   }
-
   // Sales
   static async getSales(params?: {
     page?: number;
@@ -455,6 +458,11 @@ export class AdminService {
     if (params?.date_to) queryParams.append('date_to', params.date_to);
     const url = `/sales${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return ApiService.get<AdminListResponse<AdminSale>>(url);
+  }
+
+  // Método para buscar todas as vendas (sem paginação)
+  static async getAllSales(): Promise<AdminSale[]> {
+    return ApiService.get<AdminSale[]>('/sales');
   }
 
   static async getSale(id: number): Promise<AdminSale> {
