@@ -90,12 +90,12 @@ export default function CarsPage() {
   useEffect(() => {
     loadCars();
   }, [pagination.current_page, searchTerm, selectedStatus, selectedBrand]);
-
   const loadBrands = async () => {
     try {
       setIsLoadingBrands(true);
-      const response = await AdminService.getBrands();
-      setBrands(response.data);
+      const brands = await AdminService.getAllBrands();
+      console.log('Marcas carregadas:', brands); // Debug
+      setBrands(brands);
     } catch (error) {
       console.error('Erro ao carregar marcas:', error);
     } finally {
@@ -179,12 +179,20 @@ export default function CarsPage() {
   };
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'active':
-        return <Badge className="bg-green-100 text-green-800">Ativo</Badge>;
-      case 'inactive':
-        return <Badge className="bg-yellow-100 text-yellow-800">Inativo</Badge>;
+      case 'available':
+        return (
+          <Badge className="bg-green-100 text-green-800">Disponível</Badge>
+        );
       case 'sold':
         return <Badge className="bg-blue-100 text-blue-800">Vendido</Badge>;
+      case 'reserved':
+        return (
+          <Badge className="bg-yellow-100 text-yellow-800">Reservado</Badge>
+        );
+      case 'maintenance':
+        return (
+          <Badge className="bg-orange-100 text-orange-800">Manutenção</Badge>
+        );
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -192,31 +200,36 @@ export default function CarsPage() {
 
   const getStatusName = (status: string) => {
     switch (status) {
-      case 'active':
-        return 'Ativo';
-      case 'inactive':
-        return 'Inativo';
+      case 'available':
+        return 'Disponível';
       case 'sold':
         return 'Vendido';
+      case 'reserved':
+        return 'Reservado';
+      case 'maintenance':
+        return 'Manutenção';
       default:
         return status;
     }
   };
 
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value: string | number) => {
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
-    }).format(value);
+    }).format(numValue);
   };
 
   const formatMileage = (value: number) => {
     return new Intl.NumberFormat('pt-BR').format(value) + ' km';
   };
-
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), 'dd/MM/yyyy', { locale: ptBR });
   };
+
+  // Debug: log do estado das marcas
+  console.log('Estado das marcas:', { brands, isLoadingBrands });
   if (isLoading && cars.length === 0) {
     return (
       <div className="space-y-6">
@@ -283,18 +296,21 @@ export default function CarsPage() {
               </div>
             </div>{' '}
             <div className="w-full sm:w-48">
+              {' '}
               <select
                 value={selectedStatus}
                 onChange={e => handleStatusFilter(e.target.value)}
                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
               >
                 <option value="">Todos os status</option>
-                <option value="active">Ativo</option>
-                <option value="inactive">Inativo</option>
+                <option value="available">Disponível</option>
                 <option value="sold">Vendido</option>
+                <option value="reserved">Reservado</option>
+                <option value="maintenance">Manutenção</option>
               </select>
             </div>
             <div className="w-full sm:w-48">
+              {' '}
               <select
                 value={selectedBrand}
                 onChange={e => handleBrandFilter(e.target.value)}
@@ -304,11 +320,11 @@ export default function CarsPage() {
                 <option value="">
                   {isLoadingBrands ? 'Carregando...' : 'Todas as marcas'}
                 </option>
-                {/* {brands.map(brand => (
+                {brands.map(brand => (
                   <option key={brand.id} value={brand.id.toString()}>
                     {brand.name}
                   </option>
-                ))} */}
+                ))}
               </select>
             </div>
           </div>
@@ -322,18 +338,19 @@ export default function CarsPage() {
         </CardHeader>
         <CardContent>
           <Table>
+            {' '}
             <TableHeader>
               <TableRow>
                 <TableHead>Veículo</TableHead>
+                <TableHead>VIN</TableHead>
                 <TableHead>Preço</TableHead>
                 <TableHead>Quilometragem</TableHead>
                 <TableHead>Ano</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Anunciante</TableHead>
-                <TableHead>Criado em</TableHead>
+                <TableHead>Data de Inclusão</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
-            </TableHeader>
+            </TableHeader>{' '}
             <TableBody>
               {cars.map(car => (
                 <TableRow key={car.id}>
@@ -344,33 +361,23 @@ export default function CarsPage() {
                       </div>
                       <div>
                         <div className="font-medium">
-                          {car.brand?.name} {car.model?.name}
+                          {car.model?.brand?.name} {car.model?.name}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {car.color} • {car.fuel_type} • {car.transmission}
+                          {car.color} • {car.model?.engine} • {car.model?.power}
+                          cv
                         </div>
                       </div>
                     </div>
                   </TableCell>
+                  <TableCell className="font-mono text-sm">{car.vin}</TableCell>
                   <TableCell className="font-medium">
                     {car.price ? formatCurrency(car.price) : 'Em avaliação'}
                   </TableCell>
                   <TableCell>{formatMileage(car.mileage)}</TableCell>
-                  <TableCell>{car.year}</TableCell>
+                  <TableCell>{car.manufacture_year}</TableCell>
                   <TableCell>{getStatusBadge(car.status)}</TableCell>
-                  <TableCell>
-                    {car.user ? (
-                      <div>
-                        <div className="font-medium">{car.user.name}</div>
-                        <div className="text-sm text-gray-500">
-                          {car.user.email}
-                        </div>
-                      </div>
-                    ) : (
-                      '-'
-                    )}
-                  </TableCell>
-                  <TableCell>{formatDate(car.created_at)}</TableCell>
+                  <TableCell>{formatDate(car.inclusion_date)}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -479,11 +486,11 @@ export default function CarsPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>{' '}
             <AlertDialogDescription>
               Tem certeza que deseja excluir o veículo "
-              {carToDelete?.brand?.name} {carToDelete?.model?.name}"? Esta ação
-              não pode ser desfeita.
+              {carToDelete?.model?.brand?.name} {carToDelete?.model?.name}"
+              (VIN: {carToDelete?.vin})? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

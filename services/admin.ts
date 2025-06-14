@@ -61,46 +61,44 @@ export interface AdminAddress {
 export interface AdminBrand {
   id: number;
   name: string;
-  slug: string;
+  country_origin: string;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
   models_count?: number;
   cars_count?: number;
 }
 
 export interface AdminModel {
   id: number;
-  name: string;
-  slug: string;
   brand_id: number;
-  brand?: AdminBrand;
+  name: string;
+  year_model: number;
+  engine: string;
+  power: number;
+  quantity: number;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
+  brand?: AdminBrand;
   cars_count?: number;
 }
 
 export interface AdminCar {
   id: number;
-  brand_id: number;
   model_id: number;
-  year: number;
-  price: number;
-  mileage: number;
-  fuel_type: string;
-  transmission: string;
-  body_type: string;
+  vin: string;
   color: string;
-  doors: number;
-  description: string;
-  featured: boolean;
-  status: 'active' | 'inactive' | 'sold';
-  user_id: number;
-  brand?: AdminBrand;
-  model?: AdminModel;
-  user?: AdminUser;
-  images?: string[];
+  manufacture_year: number;
+  mileage: number;
+  price: string;
+  status: 'available' | 'sold' | 'reserved' | 'maintenance';
+  inclusion_date: string;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
+  model?: AdminModel;
+  images?: string[];
 }
 
 export interface AdminSale {
@@ -195,56 +193,54 @@ export interface UpdateUserRequest {
 }
 
 export interface CreateCarRequest {
-  brand_id: number;
   model_id: number;
-  year: number;
-  price: number;
-  mileage: number;
-  fuel_type: string;
-  transmission: string;
-  body_type: string;
+  vin: string;
   color: string;
-  doors: number;
-  description: string;
-  featured?: boolean;
-  status: 'active' | 'inactive';
-  user_id?: number;
+  manufacture_year: number;
+  mileage: number;
+  price: string;
+  status: 'available' | 'reserved' | 'maintenance';
+  inclusion_date: string;
   images?: File[];
 }
 
 export interface UpdateCarRequest {
-  brand_id?: number;
   model_id?: number;
-  year?: number;
-  price?: number;
-  mileage?: number;
-  fuel_type?: string;
-  transmission?: string;
-  body_type?: string;
+  vin?: string;
   color?: string;
-  doors?: number;
-  description?: string;
-  featured?: boolean;
-  status?: 'active' | 'inactive' | 'sold';
-  user_id?: number;
+  manufacture_year?: number;
+  mileage?: number;
+  price?: string;
+  status?: 'available' | 'sold' | 'reserved' | 'maintenance';
+  inclusion_date?: string;
 }
 
 export interface CreateBrandRequest {
   name: string;
+  country_origin: string;
 }
 
 export interface UpdateBrandRequest {
   name?: string;
+  country_origin?: string;
 }
 
 export interface CreateModelRequest {
   name: string;
   brand_id: number;
+  year_model: number;
+  engine: string;
+  power: number;
+  quantity: number;
 }
 
 export interface UpdateModelRequest {
   name?: string;
   brand_id?: number;
+  year_model?: number;
+  engine?: string;
+  power?: number;
+  quantity?: number;
 }
 
 export interface CreateSaleRequest {
@@ -365,7 +361,6 @@ export class AdminService {
   static async deleteCar(id: number): Promise<void> {
     return ApiService.delete(`/cars/${id}`);
   }
-
   // Brands
   static async getBrands(params?: {
     page?: number;
@@ -379,6 +374,11 @@ export class AdminService {
     if (params?.search) queryParams.append('search', params.search);
     const url = `/brands${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return ApiService.get<AdminListResponse<AdminBrand>>(url);
+  }
+
+  // Método para buscar todas as marcas (sem paginação)
+  static async getAllBrands(): Promise<AdminBrand[]> {
+    return ApiService.get<AdminBrand[]>('/brands');
   }
 
   static async getBrand(id: number): Promise<AdminBrand> {

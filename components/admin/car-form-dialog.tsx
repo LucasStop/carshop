@@ -23,8 +23,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -35,34 +33,25 @@ import {
 import {
   AdminService,
   AdminCar,
+  AdminBrand,
+  AdminModel,
   CreateCarRequest,
   UpdateCarRequest,
 } from '@/services/admin';
 import { useAdminLoading } from './admin-loading-provider';
 
 const carFormSchema = z.object({
-  brand_id: z.number().min(1, 'Marca é obrigatória'),
   model_id: z.number().min(1, 'Modelo é obrigatório'),
-  year: z
+  vin: z.string().min(17, 'VIN deve ter 17 caracteres').max(17, 'VIN deve ter 17 caracteres'),
+  color: z.string().min(1, 'Cor é obrigatória'),
+  manufacture_year: z
     .number()
     .min(1990, 'Ano deve ser maior que 1990')
     .max(new Date().getFullYear() + 1, 'Ano inválido'),
-  price: z.number().min(1, 'Preço deve ser maior que zero'),
   mileage: z.number().min(0, 'Quilometragem não pode ser negativa'),
-  fuel_type: z.string().min(1, 'Tipo de combustível é obrigatório'),
-  transmission: z.string().min(1, 'Transmissão é obrigatória'),
-  body_type: z.string().min(1, 'Tipo de carroceria é obrigatório'),
-  color: z.string().min(1, 'Cor é obrigatória'),
-  doors: z
-    .number()
-    .min(2, 'Número de portas deve ser pelo menos 2')
-    .max(5, 'Número de portas não pode ser maior que 5'),
-  description: z
-    .string()
-    .min(10, 'Descrição deve ter pelo menos 10 caracteres'),
-  featured: z.boolean().default(false),
-  status: z.enum(['active', 'inactive']),
-  user_id: z.number().optional(),
+  price: z.string().min(1, 'Preço é obrigatório'),
+  status: z.enum(['available', 'reserved', 'maintenance']),
+  inclusion_date: z.string().min(1, 'Data de inclusão é obrigatória'),
 });
 
 type CarFormData = z.infer<typeof carFormSchema>;
@@ -73,55 +62,6 @@ interface CarFormDialogProps {
   onClose: () => void;
   onSuccess: () => void;
 }
-
-// Dados fictícios - em produção viriam da API
-const brands = [
-  { id: 1, name: 'Toyota' },
-  { id: 2, name: 'Honda' },
-  { id: 3, name: 'Volkswagen' },
-  { id: 4, name: 'Chevrolet' },
-  { id: 5, name: 'Ford' },
-  { id: 6, name: 'Nissan' },
-  { id: 7, name: 'Hyundai' },
-  { id: 8, name: 'BMW' },
-  { id: 9, name: 'Mercedes-Benz' },
-  { id: 10, name: 'Audi' },
-];
-
-const models = [
-  { id: 1, name: 'Corolla', brand_id: 1 },
-  { id: 2, name: 'Camry', brand_id: 1 },
-  { id: 3, name: 'Civic', brand_id: 2 },
-  { id: 4, name: 'Accord', brand_id: 2 },
-  { id: 5, name: 'Golf', brand_id: 3 },
-  { id: 6, name: 'Jetta', brand_id: 3 },
-  { id: 7, name: 'Onix', brand_id: 4 },
-  { id: 8, name: 'Cruze', brand_id: 4 },
-  { id: 9, name: 'Fiesta', brand_id: 5 },
-  { id: 10, name: 'Focus', brand_id: 5 },
-];
-
-const fuelTypes = [
-  'Flex',
-  'Gasolina',
-  'Etanol',
-  'Diesel',
-  'Híbrido',
-  'Elétrico',
-  'GNV',
-];
-
-const transmissionTypes = ['Manual', 'Automático', 'CVT', 'Automatizado'];
-
-const bodyTypes = [
-  'Sedan',
-  'Hatch',
-  'SUV',
-  'Pickup',
-  'Wagon',
-  'Coupe',
-  'Conversível',
-];
 
 const colors = [
   'Branco',
@@ -134,6 +74,10 @@ const colors = [
   'Dourado',
   'Bege',
   'Marrom',
+  'Azul Escuro',
+  'Cinza Escuro',
+  'Verde Escuro',
+  'Vermelho Escuro',
 ];
 
 export function CarFormDialog({
@@ -143,66 +87,98 @@ export function CarFormDialog({
   onSuccess,
 }: CarFormDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [brands, setBrands] = useState<AdminBrand[]>([]);
+  const [models, setModels] = useState<AdminModel[]>([]);
   const [selectedBrand, setSelectedBrand] = useState<number>(0);
+  const [isLoadingBrands, setIsLoadingBrands] = useState(false);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
   const { setIsLoading, setLoadingMessage } = useAdminLoading();
 
   const form = useForm<CarFormData>({
     resolver: zodResolver(carFormSchema),
     defaultValues: {
-      brand_id: 0,
       model_id: 0,
-      year: new Date().getFullYear(),
-      price: 0,
-      mileage: 0,
-      fuel_type: '',
-      transmission: '',
-      body_type: '',
+      vin: '',
       color: '',
-      doors: 4,
-      description: '',
-      featured: false,
-      status: 'active',
-      user_id: undefined,
+      manufacture_year: new Date().getFullYear(),
+      mileage: 0,
+      price: '',
+      status: 'available',
+      inclusion_date: new Date().toISOString().split('T')[0],
     },
   });
+
+  // Carregar marcas
+  useEffect(() => {
+    const loadBrands = async () => {
+      try {
+        setIsLoadingBrands(true);
+        const brandsData = await AdminService.getAllBrands();
+        setBrands(brandsData);
+      } catch (error) {
+        console.error('Erro ao carregar marcas:', error);
+      } finally {
+        setIsLoadingBrands(false);
+      }
+    };
+
+    if (open) {
+      loadBrands();
+    }
+  }, [open]);
+
+  // Carregar modelos quando marca é selecionada
+  useEffect(() => {
+    const loadModels = async () => {
+      if (selectedBrand > 0) {
+        try {
+          setIsLoadingModels(true);
+          const response = await AdminService.getModels({
+            brand: selectedBrand.toString(),
+          });
+          setModels(response.data);
+        } catch (error) {
+          console.error('Erro ao carregar modelos:', error);
+        } finally {
+          setIsLoadingModels(false);
+        }
+      } else {
+        setModels([]);
+      }
+    };
+
+    loadModels();
+  }, [selectedBrand]);
 
   useEffect(() => {
     if (car) {
       // Edição - preencher formulário
       form.reset({
-        brand_id: car.brand_id,
         model_id: car.model_id,
-        year: car.year,
-        price: car.price,
-        mileage: car.mileage,
-        fuel_type: car.fuel_type,
-        transmission: car.transmission,
-        body_type: car.body_type,
+        vin: car.vin,
         color: car.color,
-        doors: car.doors,
-        description: car.description,
-        featured: car.featured,
-        status: car.status === 'sold' ? 'active' : car.status, // Não permitir criar como vendido
-        user_id: car.user_id,
+        manufacture_year: car.manufacture_year,
+        mileage: car.mileage,
+        price: car.price,
+        status: car.status === 'sold' ? 'available' : car.status, // Não permitir criar como vendido
+        inclusion_date: car.inclusion_date.split('T')[0],
       });
-      setSelectedBrand(car.brand_id);
+      
+      // Se temos o modelo, buscar a marca
+      if (car.model?.brand_id) {
+        setSelectedBrand(car.model.brand_id);
+      }
     } else {
       // Criação - formulário vazio
       form.reset({
-        brand_id: 0,
         model_id: 0,
-        year: new Date().getFullYear(),
-        price: 0,
-        mileage: 0,
-        fuel_type: '',
-        transmission: '',
-        body_type: '',
+        vin: '',
         color: '',
-        doors: 4,
-        description: '',
-        featured: false,
-        status: 'active',
-        user_id: undefined,
+        manufacture_year: new Date().getFullYear(),
+        mileage: 0,
+        price: '',
+        status: 'available',
+        inclusion_date: new Date().toISOString().split('T')[0],
       });
       setSelectedBrand(0);
     }
@@ -210,12 +186,7 @@ export function CarFormDialog({
 
   const handleBrandChange = (brandId: number) => {
     setSelectedBrand(brandId);
-    form.setValue('brand_id', brandId);
     form.setValue('model_id', 0); // Reset model when brand changes
-  };
-
-  const getAvailableModels = () => {
-    return models.filter(model => model.brand_id === selectedBrand);
   };
 
   const onSubmit = async (data: CarFormData) => {
@@ -227,40 +198,28 @@ export function CarFormDialog({
       if (car) {
         // Atualização
         const updateData: UpdateCarRequest = {
-          brand_id: data.brand_id,
           model_id: data.model_id,
-          year: data.year,
-          price: data.price,
-          mileage: data.mileage,
-          fuel_type: data.fuel_type,
-          transmission: data.transmission,
-          body_type: data.body_type,
+          vin: data.vin,
           color: data.color,
-          doors: data.doors,
-          description: data.description,
-          featured: data.featured,
+          manufacture_year: data.manufacture_year,
+          mileage: data.mileage,
+          price: data.price,
           status: data.status,
-          user_id: data.user_id,
+          inclusion_date: data.inclusion_date,
         };
 
         await AdminService.updateCar(car.id, updateData);
       } else {
         // Criação
         const createData: CreateCarRequest = {
-          brand_id: data.brand_id,
           model_id: data.model_id,
-          year: data.year,
-          price: data.price,
-          mileage: data.mileage,
-          fuel_type: data.fuel_type,
-          transmission: data.transmission,
-          body_type: data.body_type,
+          vin: data.vin,
           color: data.color,
-          doors: data.doors,
-          description: data.description,
-          featured: data.featured,
+          manufacture_year: data.manufacture_year,
+          mileage: data.mileage,
+          price: data.price,
           status: data.status,
-          user_id: data.user_id,
+          inclusion_date: data.inclusion_date,
         };
 
         await AdminService.createCar(createData);
@@ -286,67 +245,44 @@ export function CarFormDialog({
     }
   };
 
-  const formatCurrency = (value: string) => {
-    // Remove tudo que não é número
-    const numericValue = value.replace(/\D/g, '');
-
-    // Converte para número e formata
-    const numberValue = parseFloat(numericValue) / 100;
-
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      minimumFractionDigits: 2,
-    }).format(numberValue);
-  };
-
-  const parseCurrency = (formattedValue: string): number => {
-    const numericValue = formattedValue.replace(/[^\d]/g, '');
-    return parseFloat(numericValue) / 100;
-  };
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{car ? 'Editar Veículo' : 'Novo Veículo'}</DialogTitle>
           <DialogDescription>
             {car
               ? 'Atualize as informações do veículo abaixo.'
-              : 'Preencha as informações para criar um novo anúncio de veículo.'}
+              : 'Preencha as informações para criar um novo veículo.'}
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Informações Básicas */}
+            {/* Informações do Veículo */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Informações Básicas</h3>
+              <h3 className="text-lg font-medium">Informações do Veículo</h3>
 
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="brand_id"
+                  name="model_id"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Marca</FormLabel>
                       <Select
-                        onValueChange={value =>
-                          handleBrandChange(parseInt(value))
-                        }
-                        value={field.value?.toString()}
+                        value={selectedBrand ? selectedBrand.toString() : ''}
+                        onValueChange={(value) => handleBrandChange(parseInt(value))}
+                        disabled={isLoadingBrands}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione a marca" />
+                            <SelectValue placeholder={isLoadingBrands ? 'Carregando...' : 'Selecione uma marca'} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {brands.map(brand => (
-                            <SelectItem
-                              key={brand.id}
-                              value={brand.id.toString()}
-                            >
+                            <SelectItem key={brand.id} value={brand.id.toString()}>
                               {brand.name}
                             </SelectItem>
                           ))}
@@ -364,21 +300,24 @@ export function CarFormDialog({
                     <FormItem>
                       <FormLabel>Modelo</FormLabel>
                       <Select
-                        onValueChange={value => field.onChange(parseInt(value))}
-                        value={field.value?.toString()}
-                        disabled={!selectedBrand}
+                        value={field.value ? field.value.toString() : ''}
+                        onValueChange={(value) => field.onChange(parseInt(value))}
+                        disabled={isLoadingModels || selectedBrand === 0}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione o modelo" />
+                            <SelectValue placeholder={
+                              selectedBrand === 0 
+                                ? 'Selecione uma marca primeiro'
+                                : isLoadingModels 
+                                  ? 'Carregando...' 
+                                  : 'Selecione um modelo'
+                            } />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {getAvailableModels().map(model => (
-                            <SelectItem
-                              key={model.id}
-                              value={model.id.toString()}
-                            >
+                          {models.map(model => (
+                            <SelectItem key={model.id} value={model.id.toString()}>
                               {model.name}
                             </SelectItem>
                           ))}
@@ -390,51 +329,24 @@ export function CarFormDialog({
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="year"
+                  name="vin"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Ano</FormLabel>
+                      <FormLabel>VIN (Número do Chassi)</FormLabel>
                       <FormControl>
                         <Input
-                          type="number"
-                          min="1990"
-                          max={new Date().getFullYear() + 1}
+                          placeholder="Ex: VINVW001AAA12345"
                           {...field}
-                          onChange={e =>
-                            field.onChange(parseInt(e.target.value))
-                          }
+                          onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                          maxLength={17}
                         />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="doors"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Portas</FormLabel>
-                      <Select
-                        onValueChange={value => field.onChange(parseInt(value))}
-                        value={field.value?.toString()}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Nº de portas" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="2">2 portas</SelectItem>
-                          <SelectItem value="3">3 portas</SelectItem>
-                          <SelectItem value="4">4 portas</SelectItem>
-                          <SelectItem value="5">5 portas</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormDescription>
+                        Código de identificação único do veículo (17 caracteres)
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -446,13 +358,10 @@ export function CarFormDialog({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Cor</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
+                      <Select value={field.value} onValueChange={field.onChange}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione a cor" />
+                            <SelectValue placeholder="Selecione uma cor" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -469,116 +378,20 @@ export function CarFormDialog({
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <FormField
-                  control={form.control}
-                  name="fuel_type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Combustível</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Tipo de combustível" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {fuelTypes.map(fuel => (
-                            <SelectItem key={fuel} value={fuel}>
-                              {fuel}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="transmission"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Transmissão</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Tipo de transmissão" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {transmissionTypes.map(transmission => (
-                            <SelectItem key={transmission} value={transmission}>
-                              {transmission}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="body_type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Carroceria</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Tipo de carroceria" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {bodyTypes.map(body => (
-                            <SelectItem key={body} value={body}>
-                              {body}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-
-            {/* Preço e Quilometragem */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Preço e Quilometragem</h3>
-
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="price"
+                  name="manufacture_year"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Preço</FormLabel>
+                      <FormLabel>Ano de Fabricação</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="R$ 0,00"
-                          value={
-                            field.value
-                              ? formatCurrency(field.value.toString() + '00')
-                              : ''
-                          }
-                          onChange={e => {
-                            const value = parseCurrency(e.target.value);
-                            field.onChange(value);
-                          }}
+                          type="number"
+                          min={1990}
+                          max={new Date().getFullYear() + 1}
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value))}
                         />
                       </FormControl>
                       <FormMessage />
@@ -595,14 +408,15 @@ export function CarFormDialog({
                       <FormControl>
                         <Input
                           type="number"
-                          min="0"
-                          placeholder="0"
+                          min={0}
+                          placeholder="Ex: 15000"
                           {...field}
-                          onChange={e =>
-                            field.onChange(parseInt(e.target.value) || 0)
-                          }
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                         />
                       </FormControl>
+                      <FormDescription>
+                        Quilometragem atual do veículo
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -610,83 +424,79 @@ export function CarFormDialog({
               </div>
             </div>
 
-            {/* Descrição */}
+            {/* Preço e Status */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Descrição</h3>
-
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descrição</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Descreva o veículo, suas características, histórico de manutenção, etc."
-                        className="min-h-[100px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Uma boa descrição ajuda a atrair mais compradores.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Configurações */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Configurações</h3>
+              <h3 className="text-lg font-medium">Preço e Status</h3>
 
               <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Preço</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Ex: 180000"
+                          {...field}
+                          onChange={(e) => {
+                            // Permitir apenas números
+                            const value = e.target.value.replace(/\D/g, '');
+                            field.onChange(value);
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Preço em reais (apenas números)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="status"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
+                      <Select value={field.value} onValueChange={field.onChange}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Status do anúncio" />
+                            <SelectValue placeholder="Selecione o status" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="active">Ativo</SelectItem>
-                          <SelectItem value="inactive">Inativo</SelectItem>
+                          <SelectItem value="available">Disponível</SelectItem>
+                          <SelectItem value="reserved">Reservado</SelectItem>
+                          <SelectItem value="maintenance">Manutenção</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="featured"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Destaque</FormLabel>
-                        <FormDescription>
-                          Marcar como anúncio em destaque
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
               </div>
+
+              <FormField
+                control={form.control}
+                name="inclusion_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Data de Inclusão</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Data em que o veículo foi incluído no estoque
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <DialogFooter>
