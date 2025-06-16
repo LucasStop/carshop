@@ -14,9 +14,9 @@ export function Header() {
 
   const navigation = [
     { name: 'Início', href: '/' },
-    { name: 'Carros Novos', href: '/carros/novos' },
-    { name: 'Carros Usados', href: '/carros/usados' },
-    { name: 'Promoções', href: '/promocoes' },
+    // { name: 'Carros Novos', href: '/carros/novos' },
+    // { name: 'Carros Usados', href: '/carros/usados' },
+    // { name: 'Promoções', href: '/promocoes' },
     { name: 'Contato', href: '/contato' },
   ];
 
