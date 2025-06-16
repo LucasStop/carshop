@@ -6,14 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, Car, User, ShoppingCart, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { useCart } from '@/hooks/use-cart';
 import { UserMenu } from '@/components/user-menu';
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const { itemCount } = useCart();
 
   const navigation = [
     { name: 'Início', href: '/' },
+    { name: 'Carros', href: '/carros' },
     // { name: 'Carros Novos', href: '/carros/novos' },
     // { name: 'Carros Usados', href: '/carros/usados' },
     // { name: 'Promoções', href: '/promocoes' },
@@ -60,9 +63,16 @@ export function Header() {
                   Login
                 </Link>
               </Button>
-            )}
-            <Button variant="ghost" size="sm">
-              <ShoppingCart className="h-4 w-4" />
+            )}{' '}
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/carrinho" className="relative">
+                <ShoppingCart className="h-4 w-4" />
+                {itemCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                    {itemCount}
+                  </span>
+                )}
+              </Link>
             </Button>
             <Button size="sm" className="bg-black text-white hover:bg-gray-800">
               Vender Carro
@@ -135,10 +145,25 @@ export function Header() {
                         Login
                       </Link>
                     </Button>
-                  )}
-                  <Button variant="ghost" className="w-full justify-start">
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                    Carrinho
+                  )}{' '}
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start"
+                    asChild
+                  >
+                    <Link
+                      href="/carrinho"
+                      onClick={() => setIsOpen(false)}
+                      className="relative"
+                    >
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      Carrinho
+                      {itemCount > 0 && (
+                        <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                          {itemCount}
+                        </span>
+                      )}
+                    </Link>
                   </Button>
                   <Button className="w-full bg-black text-white hover:bg-gray-800">
                     Vender Carro

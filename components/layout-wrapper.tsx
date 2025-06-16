@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+import { CartProvider } from '@/hooks/use-cart';
 
 interface LayoutWrapperProps {
   children: React.ReactNode;
@@ -13,10 +14,10 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const isAdminRoute = pathname?.startsWith('/admin');
 
   return (
-    <>
+    <CartProvider>
       {!isAdminRoute && <Header />}
       {children}
       {!isAdminRoute && <Footer />}
-    </>
+    </CartProvider>
   );
 }
