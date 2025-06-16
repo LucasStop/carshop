@@ -11,7 +11,7 @@ const bannerSlides = [
     title: 'Mercedes-Benz S-Class 2024',
     subtitle: 'Luxo e Performance Incomparáveis',
     price: 'R$ 850.000',
-    image: '/placeholder.svg?height=600&width=1200',
+    image: '/mercedes-benz-s-class-2024.png',
     cta: 'Ver Detalhes',
   },
   {
@@ -19,7 +19,7 @@ const bannerSlides = [
     title: 'BMW X7 2024',
     subtitle: 'SUV de Luxo Redefinido',
     price: 'R$ 720.000',
-    image: '/placeholder.svg?height=600&width=1200',
+    image: '/bmw-x7-2024.png',
     cta: 'Agendar Test Drive',
   },
   {
@@ -27,7 +27,7 @@ const bannerSlides = [
     title: 'Audi A8 2024',
     subtitle: 'Tecnologia e Elegância',
     price: 'R$ 680.000',
-    image: '/placeholder.svg?height=600&width=1200',
+    image: '/audi-a8-2024.png ',
     cta: 'Conhecer Mais',
   },
 ];
@@ -65,10 +65,12 @@ export function HeroBanner() {
             src={slide.image || '/placeholder.svg'}
             alt={slide.title}
             fill
-            className="object-cover"
+            className="object-cover object-center"
             priority={index === 0}
+            sizes="100vw"
           />
-          <div className="absolute inset-0 bg-black/40" />
+          <div className="absolute inset-0 bg-black/50" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
           <div className="absolute inset-0 flex items-center">
             <div className="container mx-auto px-4">
               <div className="max-w-2xl text-white">
