@@ -203,36 +203,54 @@ export class AuthService {
   /**
    * Atualiza os dados do usuário
    */
-  //   static async updateProfile(userData: Partial<RegisterRequest>): Promise<any> {
-  //     try {
-  //       const response = await ApiService.put('/user/profile', userData);
+  static async updateProfile(userData: {
+    name: string;
+    email: string;
+    phone: string;
+    cpf: string;
+    rg: string;
+    birth_date: string;
+    address: {
+      address: string;
+      number: string;
+      complement?: string;
+      city: string;
+      state: string;
+      zip_code: string;
+    };
+  }): Promise<any> {
+    try {
+      const response = await ApiService.put<any>('/user/profile', userData);
 
-  //       // Atualizar dados do usuário no localStorage
-  //       if (response.user) {
-  //         ApiService.setUser(response.user);
-  //       }
+      // Atualizar dados do usuário no localStorage
+      if (response.user) {
+        ApiService.setUser(response.user);
+      }
 
-  //       return response;
-  //     } catch (error) {
-  //       console.error('Erro ao atualizar perfil:', error);
-  //       throw error;
-  //     }
-  //   }
+      return response;
+    } catch (error) {
+      console.error('Erro ao atualizar perfil:', error);
+      throw error;
+    }
+  }
 
   /**
    * Altera a senha do usuário
    */
-  //   static async changePassword(passwords: {
-  //     current_password: string;
-  //     password: string;
-  //     password_confirmation: string;
-  //   }): Promise<any> {
-  //     try {
-  //       const response = await ApiService.put('/user/change-password', passwords);
-  //       return response;
-  //     } catch (error) {
-  //       console.error('Erro ao alterar senha:', error);
-  //       throw error;
-  //     }
-  //   }
+  static async changePassword(passwords: {
+    current_password: string;
+    password: string;
+    password_confirmation: string;
+  }): Promise<any> {
+    try {
+      const response = await ApiService.put<any>(
+        '/user/change-password',
+        passwords
+      );
+      return response;
+    } catch (error) {
+      console.error('Erro ao alterar senha:', error);
+      throw error;
+    }
+  }
 }
