@@ -12,27 +12,117 @@ import { AdminCar, AdminService } from '@/services/admin';
 export function FeaturedCars() {
   const [cars, setCars] = useState<AdminCar[]>([]);
   const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    async function loadCars() {
-      try {
-        const response = await AdminService.getCars();
-        setCars(response.data);
-      } catch (error) {
-        console.error('Erro ao carregar carros:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
+  const [filters, setFilters] = useState<{
+    brand?: string;
+    model?: string;
+    yearFrom?: string;
+    yearTo?: string;
+    priceMin?: number;
+    priceMax?: number;
+  }>({});
+  // Função para carregar carros com filtros
+  const loadCars = async (appliedFilters: any = {}) => {
+    setLoading(true);
+    try {
+      const searchParams: any = {
+        page: 1,
+        per_page: 12,
+      };
 
+      // Aplicar filtros se existirem
+      if (appliedFilters.brand) {
+        searchParams.brand = appliedFilters.brand;
+      }
+      if (appliedFilters.model) {
+        searchParams.model = appliedFilters.model;
+      }
+
+      const response = await AdminService.getCars(searchParams);
+
+      // Filtrar por ano e preço no frontend (se a API não suportar esses filtros)
+      let filteredCars = response.data;
+
+      if (appliedFilters.yearFrom || appliedFilters.yearTo) {
+        filteredCars = filteredCars.filter(car => {
+          const carYear = car.manufacture_year;
+          const yearFromMatch =
+            !appliedFilters.yearFrom ||
+            carYear >= parseInt(appliedFilters.yearFrom);
+          const yearToMatch =
+            !appliedFilters.yearTo ||
+            carYear <= parseInt(appliedFilters.yearTo);
+          return yearFromMatch && yearToMatch;
+        });
+      }
+
+      if (appliedFilters.priceMin || appliedFilters.priceMax) {
+        filteredCars = filteredCars.filter(car => {
+          const carPrice = parseFloat(car.price);
+          const priceMinMatch =
+            !appliedFilters.priceMin || carPrice >= appliedFilters.priceMin;
+          const priceMaxMatch =
+            !appliedFilters.priceMax || carPrice <= appliedFilters.priceMax;
+          return priceMinMatch && priceMaxMatch;
+        });
+      }
+
+      setCars(filteredCars);
+    } catch (error) {
+      console.error('Erro ao carregar carros:', error);
+      setCars([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Carregar carros inicialmente
+  useEffect(() => {
     loadCars();
+  }, []);
+
+  // Escutar eventos de filtro
+  useEffect(() => {
+    const handleApplyFilters = (event: CustomEvent) => {
+      const newFilters = event.detail;
+      setFilters(newFilters);
+      loadCars(newFilters);
+    };
+
+    const handleClearFilters = () => {
+      setFilters({});
+      loadCars();
+    };
+
+    window.addEventListener(
+      'applyFilters',
+      handleApplyFilters as EventListener
+    );
+    window.addEventListener('clearFilters', handleClearFilters);
+
+    return () => {
+      window.removeEventListener(
+        'applyFilters',
+        handleApplyFilters as EventListener
+      );
+      window.removeEventListener('clearFilters', handleClearFilters);
+    };
   }, []);
 
   return (
     <section>
+      {' '}
       <div className="mb-8 flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900 md:text-3xl">
-          Carros em Destaque
-        </h2>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 md:text-3xl">
+            Carros em Destaque
+          </h2>
+          {!loading && (
+            <p className="mt-1 text-sm text-gray-600">
+              {cars.length}{' '}
+              {cars.length === 1 ? 'carro encontrado' : 'carros encontrados'}
+            </p>
+          )}
+        </div>
         <Link
           href="/carros"
           className="text-sm font-medium text-gray-600 hover:text-black"
