@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { AdminService, AdminBrand, AdminModel } from '@/services/admin';
 
 export function CarFilters() {
-  const [priceRange, setPriceRange] = useState([50000, 2000000]);
+  const [priceRange, setPriceRange] = useState([50000, 500000]);
   const [selectedBrand, setSelectedBrand] = useState<string>('');
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [yearFrom, setYearFrom] = useState<string>('');
@@ -144,7 +144,7 @@ export function CarFilters() {
             <Slider
               value={priceRange}
               onValueChange={setPriceRange}
-              max={2000000}
+              max={500000}
               min={50000}
               step={10000}
               className="w-full"
