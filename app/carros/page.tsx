@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -51,7 +51,7 @@ interface CarFilters {
   status: string;
 }
 
-export default function CarsPage() {
+function CarsPageContent() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -639,5 +639,33 @@ export default function CarsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// Componente com loading fallback
+function CarsPageLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        <div className="animate-pulse space-y-8">
+          <div className="h-20 rounded bg-gray-200" />
+          <div className="h-40 rounded bg-gray-200" />
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-80 rounded bg-gray-200" />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Componente principal exportado
+export default function CarsPage() {
+  return (
+    <Suspense fallback={<CarsPageLoading />}>
+      <CarsPageContent />
+    </Suspense>
   );
 }
