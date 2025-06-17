@@ -445,12 +445,11 @@ export default function CarsPage() {
                     <SelectValue placeholder="Todas as marcas" />
                   </SelectTrigger>
                   <SelectContent>
-                    {/* <SelectItem value="">Todas as marcas</SelectItem>
                     {brands.map(brand => (
                       <SelectItem key={brand.id} value={brand.name}>
                         {brand.name}
                       </SelectItem>
-                    ))} */}
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
