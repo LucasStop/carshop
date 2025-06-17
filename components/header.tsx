@@ -74,9 +74,9 @@ export function Header() {
                 )}
               </Link>
             </Button>
-            <Button size="sm" className="bg-black text-white hover:bg-gray-800">
+            {/* <Button size="sm" className="bg-black text-white hover:bg-gray-800">
               Vender Carro
-            </Button>
+            </Button> */}
           </div>
 
           {/* Mobile Menu */}
@@ -165,9 +165,9 @@ export function Header() {
                       )}
                     </Link>
                   </Button>
-                  <Button className="w-full bg-black text-white hover:bg-gray-800">
+                  {/* <Button className="w-full bg-black text-white hover:bg-gray-800">
                     Vender Carro
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
             </SheetContent>
