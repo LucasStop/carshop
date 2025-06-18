@@ -30,6 +30,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { AdminService, CreateSaleRequest } from '@/services/admin';
+import { any } from 'prop-types';
 
 export default function CartPage() {
   const router = useRouter();
@@ -80,7 +81,8 @@ export default function CartPage() {
     );
 
     setShowCheckout(true);
-  };  const handlePayment = async () => {
+  };
+  const handlePayment = async () => {
     if (
       !paymentData.cardNumber ||
       !paymentData.expiryDate ||
@@ -110,14 +112,14 @@ export default function CartPage() {
       loadingToast.dismiss();
 
       // Criar vendas para cada item do carrinho
-      const salePromises = cartItems.map(async (item) => {
+      const salePromises = cartItems.map(async item => {
         const saleData: CreateSaleRequest = {
           car_id: item.id,
           customer_user_id: user!.id,
-          employee_user_id: 1, // ID do funcionário - pode ser ajustado conforme necessário
+          employee_user_id: null,
           sale_date: new Date().toISOString().split('T')[0], // Data atual no formato YYYY-MM-DD
           final_price: (item.price * (item.quantity || 1)).toString(),
-          notes: `Compra online - Pagamento em ${paymentData.installments}x - Cartão final ${paymentData.cardNumber.slice(-4)}`
+          notes: `Compra online - Pagamento em ${paymentData.installments}x - Cartão final ${paymentData.cardNumber.slice(-4)}`,
         };
 
         return AdminService.createSale(saleData);
@@ -140,7 +142,7 @@ export default function CartPage() {
       loadingToast.dismiss();
 
       console.error('Erro ao processar compra:', error);
-      
+
       toastError(
         'Erro no pagamento',
         'Ocorreu um erro ao processar seu pagamento. Verifique os dados do cartão e tente novamente.'

@@ -247,7 +247,7 @@ export interface UpdateModelRequest {
 export interface CreateSaleRequest {
   car_id: number;
   customer_user_id: number;
-  employee_user_id: number;
+  employee_user_id: number | null; // Pode ser null se não houver um funcionário associado
   sale_date: string;
   final_price: string;
   notes?: string;
