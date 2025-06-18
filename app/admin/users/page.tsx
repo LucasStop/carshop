@@ -58,6 +58,7 @@ import { UserFormDialog } from '@/components/admin/user-form-dialog';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useAdminLoading } from '@/components/admin/admin-loading-provider';
 import { format } from 'date-fns';
+import { toastSuccess, toastError } from '@/hooks/use-toast';
 import { ptBR } from 'date-fns/locale';
 
 export default function UsersPage() {
@@ -161,7 +162,6 @@ export default function UsersPage() {
         return slug;
     }
   };
-
   const handleDeleteUser = async () => {
     if (!userToDelete || !canManageUsers()) return;
 
@@ -170,10 +170,21 @@ export default function UsersPage() {
       setLoadingMessage('Excluindo usuário...');
 
       await AdminService.deleteUser(userToDelete.id);
+
+      toastSuccess(
+        'Usuário excluído com sucesso!',
+        `${userToDelete.name} foi removido do sistema.`
+      );
+
       await loadUsers();
       setUserToDelete(null);
     } catch (error) {
       console.error('Erro ao excluir usuário:', error);
+
+      toastError(
+        'Erro ao excluir usuário',
+        'Não foi possível remover o usuário. Tente novamente.'
+      );
     } finally {
       setGlobalLoading(false);
     }

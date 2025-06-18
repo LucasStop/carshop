@@ -14,17 +14,25 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
+import { toastSuccess, toastInfo } from '@/hooks/use-toast';
 
 export function UserMenu() {
   const { user, logout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   if (!user) return null;
-
   const handleLogout = async () => {
     setIsLoggingOut(true);
+
+    toastInfo('Fazendo logout...', 'Aguarde enquanto encerramos sua sessão');
+
     try {
       await logout();
+
+      toastSuccess(
+        'Logout realizado com sucesso!',
+        'Você foi desconectado com segurança. Até logo!'
+      );
     } catch (error) {
       console.error('Erro no logout:', error);
     } finally {

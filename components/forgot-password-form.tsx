@@ -24,6 +24,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { toastSuccess, toastError, toastLoading } from '@/hooks/use-toast';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -45,6 +46,12 @@ export function ForgotPasswordForm() {
   const onSubmit = async (data: ForgotPasswordFormData) => {
     setIsLoading(true);
 
+    // Toast de carregamento
+    const loadingToast = toastLoading(
+      'Enviando email...',
+      'Processando sua solicitação de recuperação de senha'
+    );
+
     try {
       // Aqui você implementará a lógica de recuperação de senha
       console.log('Forgot password data:', data);
@@ -52,9 +59,25 @@ export function ForgotPasswordForm() {
       // Simulação de API call
       await new Promise(resolve => setTimeout(resolve, 1000));
 
+      // Fechar toast de carregamento
+      loadingToast.dismiss();
+
+      toastSuccess(
+        'Email enviado com sucesso!',
+        'Verifique sua caixa de entrada e spam para as instruções de recuperação.'
+      );
+
       setIsSubmitted(true);
     } catch (error) {
       console.error('Erro ao enviar email de recuperação:', error);
+
+      // Fechar toast de carregamento
+      loadingToast.dismiss();
+
+      toastError(
+        'Erro ao enviar email',
+        'Não foi possível enviar o email de recuperação. Tente novamente.'
+      );
     } finally {
       setIsLoading(false);
     }

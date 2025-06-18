@@ -59,6 +59,7 @@ import { usePermissions } from '@/hooks/use-permissions';
 import { useAdminLoading } from '@/components/admin/admin-loading-provider';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toastSuccess, toastError } from '@/hooks/use-toast';
 
 export default function CarsPage() {
   const [cars, setCars] = useState<AdminCar[]>([]);
@@ -154,10 +155,21 @@ export default function CarsPage() {
       setLoadingMessage('Excluindo veículo...');
 
       await AdminService.deleteCar(carToDelete.id);
+
+      toastSuccess(
+        'Veículo excluído com sucesso!',
+        `${carToDelete.color} ${carToDelete.model?.brand?.name} ${carToDelete.model?.name} foi removido do sistema.`
+      );
+
       await loadCars();
       setCarToDelete(null);
     } catch (error) {
       console.error('Erro ao excluir veículo:', error);
+
+      toastError(
+        'Erro ao excluir veículo',
+        'Não foi possível remover o veículo. Tente novamente.'
+      );
     } finally {
       setGlobalLoading(false);
     }

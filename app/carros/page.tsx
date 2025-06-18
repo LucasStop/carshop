@@ -194,10 +194,10 @@ function CarsPageContent() {
       mileage: car.mileage,
     });
 
-    toast({
-      title: 'Adicionado ao carrinho!',
-      description: `${car.model?.brand?.name} ${car.model?.name} foi adicionado ao seu carrinho.`,
-    });
+    // toast({
+    //   title: 'Adicionado ao carrinho!',
+    //   description: `${car.model?.brand?.name} ${car.model?.name} foi adicionado ao seu carrinho.`,
+    // });
   };
 
   const isInCart = (carId: number) => {

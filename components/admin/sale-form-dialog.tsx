@@ -38,8 +38,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { toastSuccess, toastError, toastLoading } from '@/hooks/use-toast';
 
 const saleSchema = z.object({
   car_id: z.string().min(1, 'Selecione um veículo'),
@@ -69,7 +69,6 @@ export function SaleFormDialog({
   const [customers, setCustomers] = useState<AdminUser[]>([]);
   const [employees, setEmployees] = useState<AdminUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
   const form = useForm<SaleFormData>({
     resolver: zodResolver(saleSchema),
@@ -135,15 +134,18 @@ export function SaleFormDialog({
       setEmployees(employeeUsers);
     } catch (error) {
       console.error('Erro ao carregar dados do formulário:', error);
-      toast({
-        title: 'Erro',
-        description: 'Erro ao carregar dados do formulário',
-        variant: 'destructive',
-      });
+      toastError(
+        'Erro ao carregar dados',
+        'Erro ao carregar dados do formulário'
+      );
     }
   };
-
   const handleSubmit = async (data: SaleFormData) => {
+    const loadingToast = toastLoading(
+      sale ? 'Atualizando venda...' : 'Criando venda...',
+      'Processando dados da venda'
+    );
+
     try {
       setIsLoading(true);
 
@@ -158,29 +160,33 @@ export function SaleFormDialog({
 
       if (sale) {
         await AdminService.updateSale(sale.id, saleData as UpdateSaleRequest);
-        toast({
-          title: 'Sucesso',
-          description: 'Venda atualizada com sucesso',
-        });
+
+        loadingToast.dismiss();
+        toastSuccess(
+          'Venda atualizada com sucesso!',
+          'Os dados da venda foram atualizados.'
+        );
       } else {
         await AdminService.createSale(saleData as CreateSaleRequest);
-        toast({
-          title: 'Sucesso',
-          description: 'Venda cadastrada com sucesso',
-        });
+
+        loadingToast.dismiss();
+        toastSuccess(
+          'Venda criada com sucesso!',
+          'A venda foi registrada no sistema.'
+        );
       }
 
       onSubmit();
       onClose();
     } catch (error: any) {
       console.error('Erro ao salvar venda:', error);
-      toast({
-        title: 'Erro',
-        description:
-          error?.response?.data?.message ||
-          'Erro ao salvar venda. Tente novamente.',
-        variant: 'destructive',
-      });
+
+      loadingToast.dismiss();
+      toastError(
+        'Erro ao salvar venda',
+        error?.response?.data?.message ||
+          'Erro ao salvar venda. Tente novamente.'
+      );
     } finally {
       setIsLoading(false);
     }

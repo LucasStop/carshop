@@ -5,8 +5,8 @@ import * as React from 'react';
 
 import type { ToastActionElement, ToastProps } from '@/components/ui/toast';
 
-const TOAST_LIMIT = 1;
-const TOAST_REMOVE_DELAY = 1000000;
+const TOAST_LIMIT = 5;
+const TOAST_REMOVE_DELAY = 6000;
 
 type ToasterToast = ToastProps & {
   id: string;
@@ -189,3 +189,52 @@ function useToast() {
 }
 
 export { useToast, toast };
+
+// Funções utilitárias para diferentes tipos de toast
+export const toastSuccess = (title: string, description?: string) => {
+  return toast({
+    title,
+    description,
+    variant: 'default',
+    className:
+      'border-green-500 bg-green-50 text-green-900 dark:bg-green-950 dark:text-green-100',
+  });
+};
+
+export const toastError = (title: string, description?: string) => {
+  return toast({
+    title,
+    description,
+    variant: 'destructive',
+  });
+};
+
+export const toastWarning = (title: string, description?: string) => {
+  return toast({
+    title,
+    description,
+    variant: 'default',
+    className:
+      'border-yellow-500 bg-yellow-50 text-yellow-900 dark:bg-yellow-950 dark:text-yellow-100',
+  });
+};
+
+export const toastInfo = (title: string, description?: string) => {
+  return toast({
+    title,
+    description,
+    variant: 'default',
+    className:
+      'border-blue-500 bg-blue-50 text-blue-900 dark:bg-blue-950 dark:text-blue-100',
+  });
+};
+
+export const toastLoading = (title: string, description?: string) => {
+  return toast({
+    title,
+    description,
+    variant: 'default',
+    className:
+      'border-gray-500 bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100',
+  });
+};

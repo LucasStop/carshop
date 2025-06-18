@@ -8,10 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/hooks/use-toast';
 import { AdminService, AdminCar } from '@/services/admin';
 import { useCart } from '@/hooks/use-cart';
 import { useAuth } from '@/hooks/use-auth';
+import { toastSuccess, toastError, toastWarning } from '@/hooks/use-toast';
 import {
   ArrowLeft,
   Heart,
@@ -44,7 +44,6 @@ interface CarDetailsProps {
 export default function CarDetailsPage() {
   const params = useParams();
   const router = useRouter();
-  const { toast } = useToast();
   const { addToCart, cartItems } = useCart();
   const { isAuthenticated, user } = useAuth();
 
@@ -79,26 +78,23 @@ export default function CarDetailsPage() {
       }
     } catch (error) {
       console.error('Erro ao carregar detalhes do carro:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível carregar os detalhes do carro.',
-        variant: 'destructive',
-      });
+      toastError(
+        'Erro ao carregar veículo',
+        'Não foi possível carregar os detalhes do carro.'
+      );
       router.push('/carros');
     } finally {
       setLoading(false);
     }
   };
-
   const handleAddToCart = () => {
     if (!car) return;
 
     if (!isAuthenticated) {
-      toast({
-        title: 'Login necessário',
-        description: 'Faça login para adicionar ao carrinho.',
-        variant: 'destructive',
-      });
+      toastWarning(
+        'Login necessário',
+        'Faça login para adicionar ao carrinho.'
+      );
       router.push(`/login?redirect=/carros/${car.id}`);
       return;
     }
@@ -113,10 +109,7 @@ export default function CarDetailsPage() {
       mileage: car.mileage,
     });
 
-    toast({
-      title: 'Adicionado ao carrinho!',
-      description: `${car.model?.brand?.name} ${car.model?.name} foi adicionado ao seu carrinho.`,
-    });
+    // O toast já é exibido pelo hook useCart
   };
 
   const handleShare = async () => {
@@ -137,33 +130,32 @@ export default function CarDetailsPage() {
     } else {
       // Fallback: copiar para área de transferência
       navigator.clipboard.writeText(url);
-      toast({
-        title: 'Link copiado!',
-        description: 'O link foi copiado para sua área de transferência.',
-      });
+      toastSuccess(
+        'Link copiado!',
+        'O link foi copiado para sua área de transferência.'
+      );
     }
   };
-
   const toggleFavorite = () => {
     if (!isAuthenticated) {
-      toast({
-        title: 'Login necessário',
-        description: 'Faça login para favoritar carros.',
-        variant: 'destructive',
-      });
+      toastWarning('Login necessário', 'Faça login para favoritar carros.');
       router.push(`/login?redirect=/carros/${car?.id}`);
       return;
     }
 
     setIsFavorited(!isFavorited);
-    toast({
-      title: isFavorited
-        ? 'Removido dos favoritos'
-        : 'Adicionado aos favoritos',
-      description: isFavorited
-        ? 'Carro removido da sua lista de favoritos.'
-        : 'Carro adicionado à sua lista de favoritos.',
-    });
+
+    if (isFavorited) {
+      toastWarning(
+        'Removido dos favoritos',
+        'Carro removido da sua lista de favoritos.'
+      );
+    } else {
+      toastSuccess(
+        '❤️ Adicionado aos favoritos!',
+        'Carro adicionado à sua lista de favoritos.'
+      );
+    }
   };
 
   const isInCart = () => {
