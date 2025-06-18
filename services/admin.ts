@@ -88,6 +88,7 @@ export interface AdminModel {
 export interface AdminCar {
   id: number;
   model_id: number;
+  path?: string;
   vin: string;
   color: string;
   manufacture_year: number;
@@ -99,7 +100,6 @@ export interface AdminCar {
   updated_at: string;
   deleted_at: string | null;
   model?: AdminModel;
-  images?: string[];
 }
 
 export interface AdminSale {

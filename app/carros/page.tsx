@@ -188,7 +188,7 @@ function CarsPageContent() {
       id: car.id,
       name: `${car.model?.brand?.name} ${car.model?.name}`,
       price: parseFloat(car.price),
-      image: car.images?.[0] || '/placeholder.svg',
+      path: getImageUrl(car.path) || '/placeholder.svg',
       year: car.manufacture_year,
       color: car.color,
       mileage: car.mileage,
@@ -204,6 +204,11 @@ function CarsPageContent() {
     return cartItems.some(item => item.id === carId);
   };
 
+  const getImageUrl = (path: string | undefined) => {
+    if (!path) return null;
+    return `${process.env.NEXT_PUBLIC_IMAGE_URL}${path}`;
+  };
+
   const renderCarCard = (car: AdminCar) => (
     <Card
       key={car.id}
@@ -211,7 +216,7 @@ function CarsPageContent() {
     >
       <div className="relative aspect-[4/3] overflow-hidden">
         <Image
-          src={car.images?.[0] || '/placeholder.svg'}
+          src={getImageUrl(car.path) || '/placeholder-user.jpg'}
           alt={`${car.model?.brand?.name} ${car.model?.name}`}
           fill
           className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -262,7 +267,7 @@ function CarsPageContent() {
         <div className="mb-4 grid grid-cols-2 gap-2 text-xs text-gray-500">
           <div className="flex items-center gap-1">
             <Gauge className="h-3 w-3" />
-            <span>{car.mileage.toLocaleString()} km</span>
+            <span>{car.mileage?.toLocaleString()} km</span>
           </div>
           <div className="flex items-center gap-1">
             <Fuel className="h-3 w-3" />
@@ -309,7 +314,7 @@ function CarsPageContent() {
         <div className="flex gap-4">
           <div className="relative h-32 w-48 flex-shrink-0 overflow-hidden rounded-lg">
             <Image
-              src={car.images?.[0] || '/placeholder.svg'}
+              src={getImageUrl(car.path) || '/placeholder.svg'}
               alt={`${car.model?.brand?.name} ${car.model?.name}`}
               fill
               className="object-cover"
@@ -359,7 +364,7 @@ function CarsPageContent() {
             <div className="mb-4 flex gap-6 text-sm text-gray-600">
               <div className="flex items-center gap-1">
                 <Gauge className="h-4 w-4" />
-                <span>{car.mileage.toLocaleString()} km</span>
+                <span>{car.mileage?.toLocaleString()} km</span>
               </div>
               <div className="flex items-center gap-1">
                 <Fuel className="h-4 w-4" />

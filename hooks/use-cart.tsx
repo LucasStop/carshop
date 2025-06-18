@@ -12,7 +12,7 @@ export interface CartItem {
   id: number;
   name: string;
   price: number;
-  image: string;
+  path: string;
   year: number;
   color: string;
   mileage: number;

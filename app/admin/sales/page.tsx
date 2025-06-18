@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { AdminService, AdminSale, AdminListResponse } from '@/services/admin';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -215,6 +216,11 @@ export default function SalesPage() {
     );
   }
 
+  const getImageUrl = (path: string | undefined) => {
+    if (!path) return null;
+    return `${process.env.NEXT_PUBLIC_IMAGE_URL}${path}`;
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -280,8 +286,15 @@ export default function SalesPage() {
                   <TableCell className="font-medium">#{sale.id}</TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-3">
-                      <div className="flex h-12 w-16 items-center justify-center rounded bg-gray-100">
-                        <DollarSign className="h-6 w-6 text-gray-400" />
+                      <div className="relative h-16 w-24">
+                        <Image
+                          src={
+                            getImageUrl(sale.car?.path) || '/placeholder.svg'
+                          }
+                          alt={`${sale.car?.model?.brand?.name} ${sale.car?.model?.name}`}
+                          fill
+                          className="object-cover"
+                        />
                       </div>
                       <div>
                         <div className="font-medium">

@@ -146,6 +146,11 @@ export default function CartPage() {
     );
   }
 
+  const getImageUrl = (path: string | undefined) => {
+    if (!path) return null;
+    return `${process.env.NEXT_PUBLIC_IMAGE_URL}${path}`;
+  };
+
   if (showCheckout) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -295,7 +300,7 @@ export default function CartPage() {
                         <div key={item.id} className="flex items-center gap-3">
                           <div className="relative h-12 w-16 flex-shrink-0">
                             <Image
-                              src={item.image}
+                              src={getImageUrl(item.path) || '/placeholder.svg'}
                               alt={item.name}
                               fill
                               className="rounded object-cover"
@@ -425,8 +430,8 @@ export default function CartPage() {
                         <div className="flex gap-4">
                           <div className="relative h-24 w-32 flex-shrink-0">
                             <Image
-                              src={item.image}
-                              alt={item.name}
+                              src={getImageUrl(item.path) || '/placeholder.svg'}
+                              alt={item.path}
                               fill
                               className="rounded-lg object-cover"
                             />
@@ -440,7 +445,7 @@ export default function CartPage() {
                                 </h3>
                                 <p className="text-gray-600">
                                   {item.year} • {item.color} •{' '}
-                                  {item.mileage.toLocaleString()} km
+                                  {item.mileage?.toLocaleString()} km
                                 </p>
                               </div>
                               <Button

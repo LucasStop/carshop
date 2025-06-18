@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
   AdminService,
   AdminCar,
@@ -256,6 +257,11 @@ export default function CarsPage() {
     );
   }
 
+  const getImageUrl = (path: string | undefined) => {
+    if (!path) return null;
+    return `${process.env.NEXT_PUBLIC_IMAGE_URL}${path}`;
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -356,8 +362,13 @@ export default function CarsPage() {
                 <TableRow key={car.id}>
                   <TableCell>
                     <div className="flex items-center space-x-3">
-                      <div className="flex h-12 w-16 items-center justify-center rounded bg-gray-100">
-                        <CarIcon className="h-6 w-6 text-gray-400" />
+                      <div className="relative h-16 w-24">
+                        <Image
+                          src={getImageUrl(car.path) || '/placeholder.svg'}
+                          alt={`${car.model?.brand?.name} ${car.model?.name}`}
+                          fill
+                          className="object-cover"
+                        />
                       </div>
                       <div>
                         <div className="font-medium">

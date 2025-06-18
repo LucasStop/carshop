@@ -107,7 +107,7 @@ export default function CarDetailsPage() {
       id: car.id,
       name: `${car.model?.brand?.name} ${car.model?.name}`,
       price: parseFloat(car.price),
-      image: car.images?.[0] || '/placeholder.svg',
+      path: car.path || '/placeholder.svg',
       year: car.manufacture_year,
       color: car.color,
       mileage: car.mileage,
@@ -170,20 +170,20 @@ export default function CarDetailsPage() {
     return car ? cartItems.some(item => item.id === car.id) : false;
   };
 
-  const nextImage = () => {
-    if (car?.images && car.images.length > 0) {
-      setCurrentImageIndex(prev => (prev + 1) % (car.images?.length || 1));
-    }
-  };
+  // const nextImage = () => {
+  //   if (car?.images && car.images.length > 0) {
+  //     setCurrentImageIndex(prev => (prev + 1) % (car.images?.length || 1));
+  //   }
+  // };
 
-  const prevImage = () => {
-    if (car?.images && car.images.length > 0) {
-      setCurrentImageIndex(
-        prev =>
-          (prev - 1 + (car.images?.length || 1)) % (car.images?.length || 1)
-      );
-    }
-  };
+  // const prevImage = () => {
+  //   if (car?.images && car.images.length > 0) {
+  //     setCurrentImageIndex(
+  //       prev =>
+  //         (prev - 1 + (car.images?.length || 1)) % (car.images?.length || 1)
+  //     );
+  //   }
+  // };
 
   const formatPrice = (price: string | number) => {
     const numPrice = typeof price === 'string' ? parseFloat(price) : price;
@@ -251,6 +251,11 @@ export default function CarDetailsPage() {
     );
   }
 
+  const getImageUrl = (path: string | undefined) => {
+    if (!path) return null;
+    return `${process.env.NEXT_PUBLIC_IMAGE_URL}${path}`;
+  };
+
   if (!car) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -312,7 +317,7 @@ export default function CarDetailsPage() {
             <div className="space-y-4">
               <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-white">
                 <Image
-                  src={car.images?.[currentImageIndex] || '/placeholder.svg'}
+                  src={getImageUrl(car.path) || '/placeholder-user.jpg'}
                   alt={`${car.model?.brand?.name} ${car.model?.name}`}
                   fill
                   className="object-cover"
@@ -320,7 +325,7 @@ export default function CarDetailsPage() {
                 />
 
                 {/* Navigation Arrows */}
-                {car.images && car.images.length > 1 && (
+                {/* {car.path && car.path.length > 1 && (
                   <>
                     <Button
                       variant="secondary"
@@ -339,15 +344,15 @@ export default function CarDetailsPage() {
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </>
-                )}
+                )} */}
 
                 {/* Image Counter */}
-                {car.images && car.images.length > 1 && (
+                {/* {car.path && car.path.length > 1 && (
                   <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-sm text-white">
                     <Camera className="mr-1 inline h-3 w-3" />
-                    {currentImageIndex + 1} / {car.images.length}
+                    {currentImageIndex + 1} / {car.path.length}
                   </div>
-                )}
+                )} */}
 
                 {/* Status Badge */}
                 <div className="absolute left-4 top-4">
@@ -356,9 +361,9 @@ export default function CarDetailsPage() {
               </div>
 
               {/* Thumbnail Gallery */}
-              {car.images && car.images.length > 1 && (
+              {car.path && car.path.length > 1 && (
                 <div className="flex gap-2 overflow-x-auto pb-2">
-                  {car.images.map((image, index) => (
+                  {/* {car.path.map((path, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentImageIndex(index)}
@@ -369,13 +374,13 @@ export default function CarDetailsPage() {
                       }`}
                     >
                       <Image
-                        src={image}
+                        src={getImageUrl(path) || '/placeholder-user.jpg'}
                         alt={`Imagem ${index + 1}`}
                         fill
                         className="object-cover"
                       />
                     </button>
-                  ))}
+                  ))} */}
                 </div>
               )}
             </div>
@@ -419,7 +424,7 @@ export default function CarDetailsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-2 text-gray-600">
                   <Gauge className="h-5 w-5" />
-                  <span>{car.mileage.toLocaleString()} km</span>
+                  <span>{car.mileage?.toLocaleString()} km</span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-600">
                   <Calendar className="h-5 w-5" />
@@ -526,7 +531,7 @@ export default function CarDetailsPage() {
                       <div className="flex justify-between">
                         <span className="text-gray-600">Quilometragem:</span>
                         <span className="font-medium">
-                          {car.mileage.toLocaleString()} km
+                          {car.mileage?.toLocaleString()} km
                         </span>
                       </div>
                     </div>
@@ -633,7 +638,10 @@ export default function CarDetailsPage() {
                   >
                     <div className="relative aspect-[4/3] overflow-hidden">
                       <Image
-                        src={relatedCar.images?.[0] || '/placeholder.svg'}
+                        src={
+                          getImageUrl(relatedCar.path) ||
+                          '/placeholder-user.jpg'
+                        }
                         alt={`${relatedCar.model?.brand?.name} ${relatedCar.model?.name}`}
                         fill
                         className="object-cover transition-transform duration-300 group-hover:scale-105"

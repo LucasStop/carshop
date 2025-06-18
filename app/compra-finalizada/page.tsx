@@ -27,7 +27,7 @@ interface PurchaseData {
     id: number;
     name: string;
     price: number;
-    image: string;
+    path: string;
     year: number;
     color: string;
     mileage: number;
@@ -66,7 +66,7 @@ export default function PurchaseCompletePage() {
             id: 1,
             name: 'BMW X7 M50i',
             price: 850000,
-            image: '/bmw-x7-2024.png',
+            path: '/bmw-x7-2024.png',
             year: 2024,
             color: 'Preto',
             mileage: 0,
@@ -111,6 +111,11 @@ export default function PurchaseCompletePage() {
       </div>
     );
   }
+
+  const getImageUrl = (path: string | undefined) => {
+    if (!path) return null;
+    return `${process.env.NEXT_PUBLIC_IMAGE_URL}${path}`;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -226,17 +231,17 @@ export default function PurchaseCompletePage() {
                 <div key={item.id} className="flex gap-4 rounded-lg border p-4">
                   <div className="relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-md">
                     <Image
-                      src={item.image}
+                      src={getImageUrl(item.path) || '/placeholder.svg'}
                       alt={item.name}
                       fill
-                      className="object-cover"
+                      className="rounded object-cover"
                     />
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-900">{item.name}</h3>
                     <p className="text-sm text-gray-600">
                       {item.year} • {item.color} •{' '}
-                      {item.mileage.toLocaleString()} km
+                      {item.mileage?.toLocaleString()} km
                     </p>
                     <p className="mt-2 text-lg font-semibold text-gray-900">
                       R${' '}

@@ -98,13 +98,13 @@ export function AdminHeader() {
 
       <div className="flex items-center space-x-4">
         {/* Notifications */}
-        <Button variant="ghost" size="sm" className="relative">
+        {/* <Button variant="ghost" size="sm" className="relative">
           <Bell className="h-5 w-5" />
           <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-red-500"></span>
-        </Button>
+        </Button> */}
 
         {/* Back to Site */}
-        <Button
+        {/* <Button
           variant="outline"
           size="sm"
           onClick={() => router.push('/')}
@@ -112,7 +112,7 @@ export function AdminHeader() {
         >
           <Home className="mr-2 h-4 w-4" />
           Ver Site
-        </Button>
+        </Button> */}
 
         {/* User Menu */}
         <DropdownMenu>
