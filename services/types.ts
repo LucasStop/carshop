@@ -49,6 +49,7 @@ export interface User {
   cpf: string;
   rg: string;
   birth_date: string;
+  path?: string;
   role_id: number;
   address: Address;
   created_at: string;

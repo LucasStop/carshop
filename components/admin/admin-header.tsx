@@ -43,7 +43,6 @@ export function AdminHeader() {
       setIsLoggingOut(false);
     }
   };
-
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -51,6 +50,12 @@ export function AdminHeader() {
       .join('')
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  // Função para obter URL completa da imagem
+  const getImageUrl = (path: string | undefined) => {
+    if (!path) return null;
+    return `${process.env.NEXT_PUBLIC_IMAGE_URL}${path}`;
   };
 
   const getRoleBadge = (role: string) => {
@@ -114,7 +119,10 @@ export function AdminHeader() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
               <Avatar className="h-10 w-10">
-                <AvatarImage src="/placeholder-user.jpg" alt={user.name} />
+                <AvatarImage
+                  src={getImageUrl(user.path) || '/placeholder-user.jpg'}
+                  alt={user.name}
+                />
                 <AvatarFallback className="bg-black text-sm text-white">
                   {getInitials(user.name)}
                 </AvatarFallback>

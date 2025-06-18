@@ -24,7 +24,10 @@ import {
   Mail,
   Calendar,
   CreditCard,
+  Camera,
+  Upload,
 } from 'lucide-react';
+import Image from 'next/image';
 
 interface UpdateProfileData {
   name: string;
@@ -33,6 +36,7 @@ interface UpdateProfileData {
   cpf: string;
   rg: string;
   birth_date: string;
+  path?: string;
   address: {
     address: string;
     number: string;
@@ -57,6 +61,7 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const [profileData, setProfileData] = useState<UpdateProfileData>({
     name: '',
@@ -65,6 +70,7 @@ export default function ProfilePage() {
     cpf: '',
     rg: '',
     birth_date: '',
+    path: '',
     address: {
       address: '',
       number: '',
@@ -98,6 +104,7 @@ export default function ProfilePage() {
         cpf: user.cpf || '',
         rg: user.rg || '',
         birth_date: user.birth_date ? user.birth_date.split('T')[0] : '',
+        path: user.path || '',
         address: {
           address: user.address?.address || '',
           number: user.address?.number || '',
@@ -137,6 +144,60 @@ export default function ProfilePage() {
       [field]: value,
     }));
   };
+
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validar tipo de arquivo
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Erro',
+        description: 'Por favor, selecione apenas arquivos de imagem.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validar tamanho (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'Erro',
+        description: 'A imagem deve ter no máximo 5MB.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await AuthService.uploadProfileImage(formData);
+
+      setProfileData(prev => ({
+        ...prev,
+        path: response.path,
+      }));
+
+      toast({
+        title: 'Imagem enviada',
+        description: 'Sua foto de perfil foi atualizada com sucesso.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Erro ao enviar imagem',
+        description: 'Ocorreu um erro ao enviar sua foto. Tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
@@ -217,6 +278,12 @@ export default function ProfilePage() {
     }
   };
 
+  // Função para obter URL completa da imagem
+  const getImageUrl = (path: string | undefined) => {
+    if (!path) return null;
+    return `${process.env.NEXT_PUBLIC_IMAGE_URL}${path}`;
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -251,8 +318,42 @@ export default function ProfilePage() {
             <Card>
               <CardContent className="p-6">
                 <div className="flex flex-col items-center text-center">
-                  <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gray-200">
-                    <User className="h-10 w-10 text-gray-500" />
+                  <div className="relative mb-4">
+                    <div className="relative h-20 w-20 overflow-hidden rounded-full bg-gray-200">
+                      {profileData.path && getImageUrl(profileData.path) ? (
+                        <Image
+                          src={getImageUrl(profileData.path)!}
+                          alt={user.name || 'Foto do usuário'}
+                          fill
+                          className="object-cover"
+                          sizes="80px"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <User className="h-10 w-10 text-gray-500" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="absolute -bottom-1 -right-1">
+                      <label
+                        htmlFor="profile-image"
+                        className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700"
+                      >
+                        {isUploadingImage ? (
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                        ) : (
+                          <Camera className="h-4 w-4" />
+                        )}
+                      </label>
+                      <input
+                        id="profile-image"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        disabled={isUploadingImage}
+                      />
+                    </div>
                   </div>
                   <h2 className="text-xl font-semibold text-gray-900">
                     {user.name}
@@ -339,7 +440,7 @@ export default function ProfilePage() {
                       }
                       disabled={!isEditing}
                     />
-                  </div>{' '}
+                  </div>
                   <div>
                     <Label htmlFor="email">Email</Label>
                     <ValidatedInput
@@ -376,7 +477,7 @@ export default function ProfilePage() {
                       }
                       disabled={!isEditing}
                     />
-                  </div>{' '}
+                  </div>
                   <div>
                     <Label htmlFor="cpf">CPF</Label>
                     <ValidatedInput
@@ -485,7 +586,7 @@ export default function ProfilePage() {
                       }
                       disabled={!isEditing}
                     />
-                  </div>{' '}
+                  </div>
                   <div>
                     <Label htmlFor="zip_code">CEP</Label>
                     <ValidatedInput

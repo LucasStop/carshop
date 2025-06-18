@@ -204,6 +204,8 @@ export class AuthService {
    * Atualiza os dados do usuário
    */
   static async updateProfile(userData: {
+    id: number;
+    path?: string;
     name: string;
     email: string;
     phone: string;
@@ -220,7 +222,10 @@ export class AuthService {
     };
   }): Promise<any> {
     try {
-      const response = await ApiService.put<any>('/user/profile', userData);
+      const response = await ApiService.put<any>(
+        `/user/${userData.id}`,
+        userData
+      );
 
       // Atualizar dados do usuário no localStorage
       if (response.user) {
@@ -252,5 +257,34 @@ export class AuthService {
       console.error('Erro ao alterar senha:', error);
       throw error;
     }
+  }
+
+  static async uploadProfileImage(
+    formData: FormData
+  ): Promise<{ path: string }> {
+    const token = this.getToken();
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/user/upload-image`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Erro ao enviar imagem');
+    }
+
+    return response.json();
+  }
+  static getToken() {
+    return ApiService.getAuthToken();
+  }
+  static getUser() {
+    return ApiService.getUser();
   }
 }
