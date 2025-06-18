@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,7 +43,7 @@ interface PurchaseData {
   deliveryDate: string;
 }
 
-export default function PurchaseCompletePage() {
+function PurchaseCompleteContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [purchaseData, setPurchaseData] = useState<PurchaseData | null>(null);
@@ -132,7 +132,6 @@ export default function PurchaseCompletePage() {
             Parabéns! Sua compra foi processada e confirmada.
           </p>
         </div>
-
         {/* Informações do Pedido */}
         <Card className="mb-8">
           <CardHeader>
@@ -216,7 +215,6 @@ export default function PurchaseCompletePage() {
             </div>
           </CardContent>
         </Card>
-
         {/* Itens Comprados */}
         <Card className="mb-8">
           <CardHeader>
@@ -259,7 +257,6 @@ export default function PurchaseCompletePage() {
             </div>
           </CardContent>
         </Card>
-
         {/* Próximos Passos */}
         <Card className="mb-8">
           <CardHeader>
@@ -311,7 +308,6 @@ export default function PurchaseCompletePage() {
             </div>
           </CardContent>
         </Card>
-
         {/* Contato e Suporte */}
         <Card className="mb-8">
           <CardHeader>
@@ -338,7 +334,6 @@ export default function PurchaseCompletePage() {
             </div>
           </CardContent>
         </Card>
-
         {/* Ações */}
         <div className="flex flex-col justify-center gap-4 sm:flex-row">
           <Button variant="outline" asChild className="flex items-center gap-2">
@@ -365,7 +360,6 @@ export default function PurchaseCompletePage() {
             </Link>
           </Button>
         </div>
-
         {/* Nota Importante */}
         <div className="mt-8 rounded-lg border border-blue-200 bg-blue-50 p-4">
           <p className="text-sm text-blue-800">
@@ -373,8 +367,27 @@ export default function PurchaseCompletePage() {
             {purchaseData.orderId} para futuras consultas. Em caso de dúvidas,
             nossa equipe está disponível para ajudá-lo.
           </p>
-        </div>
+        </div>{' '}
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-black" />
+        <p className="text-gray-600">Carregando...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function PurchaseCompletePage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <PurchaseCompleteContent />
+    </Suspense>
   );
 }

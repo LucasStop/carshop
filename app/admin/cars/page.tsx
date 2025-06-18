@@ -229,8 +229,8 @@ export default function CarsPage() {
     return format(new Date(dateString), 'dd/MM/yyyy', { locale: ptBR });
   };
 
-  // Debug: log do estado das marcas
-  console.log('Estado das marcas:', { brands, isLoadingBrands });
+  // Debug: log do estado das marcas (removido para produção)
+  // console.log('Estado das marcas:', { brands, isLoadingBrands });
   if (isLoading && cars.length === 0) {
     return (
       <div className="space-y-6">
