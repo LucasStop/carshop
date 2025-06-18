@@ -268,7 +268,7 @@ export default function SalesPage() {
                 <TableHead>ID</TableHead>
                 <TableHead>Veículo</TableHead>
                 <TableHead>Cliente</TableHead>
-                <TableHead>Funcionário</TableHead>
+                {/* <TableHead>Funcionário</TableHead> */}
                 <TableHead>Preço Final</TableHead>
                 <TableHead>Data da Venda</TableHead>
                 <TableHead>Ações</TableHead>
@@ -305,7 +305,7 @@ export default function SalesPage() {
                       '-'
                     )}
                   </TableCell>
-                  <TableCell>
+                  {/* <TableCell>
                     {sale.employee ? (
                       <div>
                         <div className="font-medium">{sale.employee.name}</div>
@@ -316,7 +316,7 @@ export default function SalesPage() {
                     ) : (
                       '-'
                     )}
-                  </TableCell>
+                  </TableCell> */}
                   <TableCell className="font-medium">
                     {formatCurrency(sale.final_price)}
                   </TableCell>
