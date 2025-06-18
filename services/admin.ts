@@ -4,6 +4,7 @@ import { ApiService } from './api';
 export interface AdminUser {
   id: number;
   role_id: number;
+  path?: string;
   name: string;
   email: string;
   phone: string;

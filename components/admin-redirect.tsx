@@ -14,8 +14,8 @@ export function AdminRedirect() {
 
     // Se estiver autenticado e for usuário administrativo, redirecionar
     if (isAuthenticated && shouldRedirectToAdmin()) {
-      console.log('Redirecionando usuário administrativo para /admin');
-      router.push('/admin');
+      console.log('Redirecionando usuário administrativo para /admin/users');
+      router.push('/admin/users');
     }
   }, [isAuthenticated, isLoading, shouldRedirectToAdmin, router]);
 

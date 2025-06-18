@@ -249,6 +249,11 @@ export default function UsersPage() {
     );
   }
 
+  const getImageUrl = (path: string | undefined) => {
+    if (!path) return null;
+    return `${process.env.NEXT_PUBLIC_IMAGE_URL}${path}`;
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -332,7 +337,11 @@ export default function UsersPage() {
                   <TableCell>
                     <div className="flex items-center space-x-3">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src="/placeholder-user.jpg" />
+                        <AvatarImage
+                          src={
+                            getImageUrl(user.path) || '/placeholder-user.jpg'
+                          }
+                        />
                         <AvatarFallback className="text-xs">
                           {getInitials(user.name)}
                         </AvatarFallback>
