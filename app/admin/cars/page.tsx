@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
   AdminService,
   AdminCar,
@@ -58,6 +59,7 @@ import { usePermissions } from '@/hooks/use-permissions';
 import { useAdminLoading } from '@/components/admin/admin-loading-provider';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toastSuccess, toastError } from '@/hooks/use-toast';
 
 export default function CarsPage() {
   const [cars, setCars] = useState<AdminCar[]>([]);
@@ -153,10 +155,21 @@ export default function CarsPage() {
       setLoadingMessage('Excluindo veículo...');
 
       await AdminService.deleteCar(carToDelete.id);
+
+      toastSuccess(
+        'Veículo excluído com sucesso!',
+        `${carToDelete.color} ${carToDelete.model?.brand?.name} ${carToDelete.model?.name} foi removido do sistema.`
+      );
+
       await loadCars();
       setCarToDelete(null);
     } catch (error) {
       console.error('Erro ao excluir veículo:', error);
+
+      toastError(
+        'Erro ao excluir veículo',
+        'Não foi possível remover o veículo. Tente novamente.'
+      );
     } finally {
       setGlobalLoading(false);
     }
@@ -228,8 +241,8 @@ export default function CarsPage() {
     return format(new Date(dateString), 'dd/MM/yyyy', { locale: ptBR });
   };
 
-  // Debug: log do estado das marcas
-  console.log('Estado das marcas:', { brands, isLoadingBrands });
+  // Debug: log do estado das marcas (removido para produção)
+  // console.log('Estado das marcas:', { brands, isLoadingBrands });
   if (isLoading && cars.length === 0) {
     return (
       <div className="space-y-6">
@@ -255,6 +268,11 @@ export default function CarsPage() {
       </div>
     );
   }
+
+  const getImageUrl = (path: string | undefined) => {
+    if (!path) return null;
+    return `${process.env.NEXT_PUBLIC_IMAGE_URL}${path}`;
+  };
 
   return (
     <div className="space-y-6">
@@ -356,8 +374,13 @@ export default function CarsPage() {
                 <TableRow key={car.id}>
                   <TableCell>
                     <div className="flex items-center space-x-3">
-                      <div className="flex h-12 w-16 items-center justify-center rounded bg-gray-100">
-                        <CarIcon className="h-6 w-6 text-gray-400" />
+                      <div className="relative h-16 w-24">
+                        <Image
+                          src={getImageUrl(car.path) || '/placeholder.svg'}
+                          alt={`${car.model?.brand?.name} ${car.model?.name}`}
+                          fill
+                          className="object-cover"
+                        />
                       </div>
                       <div>
                         <div className="font-medium">

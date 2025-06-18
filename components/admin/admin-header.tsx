@@ -43,7 +43,6 @@ export function AdminHeader() {
       setIsLoggingOut(false);
     }
   };
-
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -51,6 +50,12 @@ export function AdminHeader() {
       .join('')
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  // Função para obter URL completa da imagem
+  const getImageUrl = (path: string | undefined) => {
+    if (!path) return null;
+    return `${process.env.NEXT_PUBLIC_IMAGE_URL}${path}`;
   };
 
   const getRoleBadge = (role: string) => {
@@ -93,13 +98,13 @@ export function AdminHeader() {
 
       <div className="flex items-center space-x-4">
         {/* Notifications */}
-        <Button variant="ghost" size="sm" className="relative">
+        {/* <Button variant="ghost" size="sm" className="relative">
           <Bell className="h-5 w-5" />
           <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-red-500"></span>
-        </Button>
+        </Button> */}
 
         {/* Back to Site */}
-        <Button
+        {/* <Button
           variant="outline"
           size="sm"
           onClick={() => router.push('/')}
@@ -107,14 +112,17 @@ export function AdminHeader() {
         >
           <Home className="mr-2 h-4 w-4" />
           Ver Site
-        </Button>
+        </Button> */}
 
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
               <Avatar className="h-10 w-10">
-                <AvatarImage src="/placeholder-user.jpg" alt={user.name} />
+                <AvatarImage
+                  src={getImageUrl(user.path) || '/placeholder-user.jpg'}
+                  alt={user.name}
+                />
                 <AvatarFallback className="bg-black text-sm text-white">
                   {getInitials(user.name)}
                 </AvatarFallback>

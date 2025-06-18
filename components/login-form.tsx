@@ -27,6 +27,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { AuthService, ApiError } from '@/services';
+import { toastSuccess, toastError, toastLoading } from '@/hooks/use-toast';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -48,10 +49,15 @@ export function LoginForm() {
       password: '',
     },
   });
-
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     setError('');
+
+    // Toast de carregamento
+    const loadingToast = toastLoading(
+      'Fazendo login...',
+      'Aguarde enquanto verificamos suas credenciais'
+    );
 
     try {
       // Testar localStorage antes do login
@@ -96,8 +102,17 @@ export function LoginForm() {
         // Debug completo do localStorage
         AuthService.debugLocalStorage();
 
-        // Verificar se é admin ou employee e redirecionar apropriadamente
+        // Fechar toast de carregamento
+        loadingToast.dismiss();
+
+        // Toast de sucesso
         const currentUser = AuthService.getCurrentUser();
+        toastSuccess(
+          'Login realizado com sucesso!',
+          `Bem-vindo de volta, ${currentUser?.name || 'usuário'}!`
+        );
+
+        // Verificar se é admin ou employee e redirecionar apropriadamente
         const userRole = currentUser?.role?.slug;
 
         if (userRole === 'admin' || userRole === 'employee') {
@@ -122,8 +137,36 @@ export function LoginForm() {
       }
     } catch (error) {
       console.error('❌ Erro no login:', error);
+
+      // Fechar toast de carregamento
+      loadingToast.dismiss();
+
       const apiError = error as ApiError;
-      setError(apiError.message || 'Erro ao fazer login. Tente novamente.');
+      let errorMessage = 'Erro ao fazer login. Tente novamente.';
+      let toastTitle = 'Erro no login';
+
+      // Usar mensagem do ApiService que já trata os erros específicos
+      if (apiError.message) {
+        errorMessage = apiError.message;
+
+        // Definir título baseado no tipo de erro
+        if (apiError.status === 401) {
+          toastTitle = 'Credenciais inválidas';
+        } else if (apiError.status === 422) {
+          toastTitle = 'Dados inválidos';
+        } else if (apiError.status === 0) {
+          toastTitle = 'Erro de conexão';
+          // errorMessage =
+          //   'Erro de conexão. Verifique sua internet e tente novamente.';
+        } else if (apiError.status === 429) {
+          toastTitle = 'Muitas tentativas';
+        } else if (apiError.status >= 500) {
+          toastTitle = 'Erro do servidor';
+        }
+      }
+
+      setError(errorMessage);
+      toastError(toastTitle, errorMessage);
 
       // Debug em caso de erro
       console.log('🔍 Debug após erro:');

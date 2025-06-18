@@ -7,12 +7,13 @@ import {
   useEffect,
   ReactNode,
 } from 'react';
+import { toastSuccess, toastInfo, toastWarning } from '@/hooks/use-toast';
 
 export interface CartItem {
   id: number;
   name: string;
   price: number;
-  image: string;
+  path: string;
   year: number;
   color: string;
   mileage: number;
@@ -151,12 +152,33 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     localStorage.setItem('carshop-cart', JSON.stringify(state.items));
   }, [state.items]);
-
   const addToCart = (item: CartItem) => {
+    const existingItem = state.items.find(cartItem => cartItem.id === item.id);
+
+    if (existingItem) {
+      toastInfo(
+        'Veículo já está no carrinho',
+        `${item.name} ${item.year} já foi adicionado anteriormente`
+      );
+    } else {
+      toastSuccess(
+        'Veículo adicionado ao carrinho!',
+        `${item.name} ${item.year} foi adicionado com sucesso`
+      );
+    }
+
     dispatch({ type: 'ADD_ITEM', payload: item });
   };
-
   const removeFromCart = (id: number) => {
+    const item = state.items.find(cartItem => cartItem.id === id);
+
+    if (item) {
+      toastWarning(
+        'Veículo removido do carrinho',
+        `${item.name} ${item.year} foi removido do carrinho`
+      );
+    }
+
     dispatch({ type: 'REMOVE_ITEM', payload: id });
   };
 
@@ -167,8 +189,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'UPDATE_QUANTITY', payload: { id, quantity } });
     }
   };
-
   const clearCart = () => {
+    if (state.items.length > 0) {
+      toastInfo(
+        'Carrinho limpo',
+        `${state.items.length} ${state.items.length === 1 ? 'veículo foi removido' : 'veículos foram removidos'}`
+      );
+    }
+
     dispatch({ type: 'CLEAR_CART' });
   };
   return (

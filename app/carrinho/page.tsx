@@ -7,9 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/hooks/use-cart';
 import { useAuth } from '@/hooks/use-auth';
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo,
+  toastLoading,
+} from '@/hooks/use-toast';
 import {
   ShoppingCart,
   Trash2,
@@ -23,9 +29,10 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { AdminService, CreateSaleRequest } from '@/services/admin';
+import { any } from 'prop-types';
 
 export default function CartPage() {
-  const { toast } = useToast();
   const router = useRouter();
   const {
     cartItems,
@@ -57,28 +64,24 @@ export default function CartPage() {
       updateQuantity(id, newQuantity);
     }
   };
-
   const handleRemoveItem = (id: number, itemName: string) => {
     removeFromCart(id);
-    toast({
-      title: 'Item removido',
-      description: `${itemName} foi removido do seu carrinho.`,
-    });
+    // O toast já é exibido pelo hook useCart
   };
-
   const handleCheckout = () => {
     if (!isAuthenticated) {
-      toast({
-        title: 'Login necessário',
-        description: 'Faça login para finalizar sua compra.',
-        variant: 'destructive',
-      });
+      toastWarning('Login necessário', 'Faça login para finalizar sua compra.');
       router.push('/login?redirect=/carrinho');
       return;
     }
+
+    toastInfo(
+      'Iniciando checkout',
+      'Preencha os dados do cartão para finalizar sua compra'
+    );
+
     setShowCheckout(true);
   };
-
   const handlePayment = async () => {
     if (
       !paymentData.cardNumber ||
@@ -86,36 +89,64 @@ export default function CartPage() {
       !paymentData.cvv ||
       !paymentData.cardName
     ) {
-      toast({
-        title: 'Dados incompletos',
-        description: 'Por favor, preencha todos os dados do cartão.',
-        variant: 'destructive',
-      });
+      toastError(
+        'Dados incompletos',
+        'Por favor, preencha todos os dados do cartão.'
+      );
       return;
     }
 
     setIsProcessing(true);
 
+    // Toast de carregamento para o pagamento
+    const loadingToast = toastLoading(
+      'Processando pagamento...',
+      'Estamos verificando os dados do seu cartão. Aguarde...'
+    );
+
     try {
       // Simular processamento do pagamento
       await new Promise(resolve => setTimeout(resolve, 3000));
 
+      // Fechar toast de carregamento
+      loadingToast.dismiss();
+
+      // Criar vendas para cada item do carrinho
+      const salePromises = cartItems.map(async item => {
+        const saleData: CreateSaleRequest = {
+          car_id: item.id,
+          customer_user_id: user!.id,
+          employee_user_id: null,
+          sale_date: new Date().toISOString().split('T')[0], // Data atual no formato YYYY-MM-DD
+          final_price: (item.price * (item.quantity || 1)).toString(),
+          notes: `Compra online - Pagamento em ${paymentData.installments}x - Cartão final ${paymentData.cardNumber.slice(-4)}`,
+        };
+
+        return AdminService.createSale(saleData);
+      });
+
+      // Aguardar todas as vendas serem criadas
+      await Promise.all(salePromises);
+
       // Limpar carrinho após compra
       clearCart();
 
-      toast({
-        title: 'Compra realizada com sucesso!',
-        description: `Obrigado pela compra! Em breve entraremos em contato para finalizar a documentação.`,
-      });
+      toastSuccess(
+        '🎉 Compra realizada com sucesso!',
+        `Parabéns! Sua compra de ${itemCount} ${itemCount === 1 ? 'veículo' : 'veículos'} foi processada. Em breve entraremos em contato para finalizar a documentação.`
+      );
 
       router.push('/compra-finalizada');
     } catch (error) {
-      toast({
-        title: 'Erro no pagamento',
-        description:
-          'Ocorreu um erro ao processar seu pagamento. Tente novamente.',
-        variant: 'destructive',
-      });
+      // Fechar toast de carregamento
+      loadingToast.dismiss();
+
+      console.error('Erro ao processar compra:', error);
+
+      toastError(
+        'Erro no pagamento',
+        'Ocorreu um erro ao processar seu pagamento. Verifique os dados do cartão e tente novamente.'
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -145,6 +176,11 @@ export default function CartPage() {
       </div>
     );
   }
+
+  const getImageUrl = (path: string | undefined) => {
+    if (!path) return null;
+    return `${process.env.NEXT_PUBLIC_IMAGE_URL}${path}`;
+  };
 
   if (showCheckout) {
     return (
@@ -295,7 +331,7 @@ export default function CartPage() {
                         <div key={item.id} className="flex items-center gap-3">
                           <div className="relative h-12 w-16 flex-shrink-0">
                             <Image
-                              src={item.image}
+                              src={getImageUrl(item.path) || '/placeholder.svg'}
                               alt={item.name}
                               fill
                               className="rounded object-cover"
@@ -425,8 +461,8 @@ export default function CartPage() {
                         <div className="flex gap-4">
                           <div className="relative h-24 w-32 flex-shrink-0">
                             <Image
-                              src={item.image}
-                              alt={item.name}
+                              src={getImageUrl(item.path) || '/placeholder.svg'}
+                              alt={item.path}
                               fill
                               className="rounded-lg object-cover"
                             />
@@ -440,7 +476,7 @@ export default function CartPage() {
                                 </h3>
                                 <p className="text-gray-600">
                                   {item.year} • {item.color} •{' '}
-                                  {item.mileage.toLocaleString()} km
+                                  {item.mileage?.toLocaleString()} km
                                 </p>
                               </div>
                               <Button

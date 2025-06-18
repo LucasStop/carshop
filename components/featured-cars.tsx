@@ -108,6 +108,11 @@ export function FeaturedCars() {
     };
   }, []);
 
+  const getImageUrl = (path: string | undefined) => {
+    if (!path) return null;
+    return `${process.env.NEXT_PUBLIC_IMAGE_URL}${path}`;
+  };
+
   return (
     <section>
       {' '}
@@ -159,7 +164,7 @@ export function FeaturedCars() {
             >
               <div className="relative aspect-[4/3] overflow-hidden">
                 <Image
-                  src={car.images?.[0] || '/placeholder.svg'}
+                  src={getImageUrl(car.path) || '/placeholder-user.jpg'}
                   alt={`${car.model?.brand?.name} ${car.model?.name} ${car.manufacture_year}`}
                   fill
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -205,7 +210,7 @@ export function FeaturedCars() {
                 </div>
 
                 <div className="mb-4 grid grid-cols-2 gap-2 text-xs text-gray-500">
-                  <span>{car.mileage.toLocaleString()} km</span>
+                  <span>{car.mileage?.toLocaleString()} km</span>
                   <span>{car.model?.engine}</span>
                   {car.model?.power && (
                     <span className="col-span-2">{car.model.power} cv</span>

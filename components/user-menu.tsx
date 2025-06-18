@@ -14,24 +14,31 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
+import { toastSuccess, toastInfo } from '@/hooks/use-toast';
 
 export function UserMenu() {
   const { user, logout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   if (!user) return null;
-
   const handleLogout = async () => {
     setIsLoggingOut(true);
+
+    toastInfo('Fazendo logout...', 'Aguarde enquanto encerramos sua sessão');
+
     try {
       await logout();
+
+      toastSuccess(
+        'Logout realizado com sucesso!',
+        'Você foi desconectado com segurança. Até logo!'
+      );
     } catch (error) {
       console.error('Erro no logout:', error);
     } finally {
       setIsLoggingOut(false);
     }
   };
-
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -41,12 +48,21 @@ export function UserMenu() {
       .slice(0, 2);
   };
 
+  // Função para obter URL completa da imagem
+  const getImageUrl = (path: string | undefined) => {
+    if (!path) return null;
+    return `${process.env.NEXT_PUBLIC_IMAGE_URL}${path}`;
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src="/placeholder-user.jpg" alt={user.name} />
+            <AvatarImage
+              src={getImageUrl(user.path) || '/placeholder-user.jpg'}
+              alt={user.name}
+            />
             <AvatarFallback className="bg-black text-sm text-white">
               {getInitials(user.name)}
             </AvatarFallback>

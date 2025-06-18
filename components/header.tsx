@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, Car, User, ShoppingCart, LogOut } from 'lucide-react';
@@ -13,6 +14,12 @@ export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const { itemCount } = useCart();
+
+  // Função para obter URL completa da imagem
+  const getImageUrl = (path: string | undefined) => {
+    if (!path) return null;
+    return `${process.env.NEXT_PUBLIC_IMAGE_URL}${path}`;
+  };
 
   const navigation = [
     { name: 'Início', href: '/' },
@@ -51,9 +58,11 @@ export function Header() {
               <div className="h-8 w-8 animate-pulse rounded-full bg-gray-200" />
             ) : isAuthenticated && user ? (
               <>
-                <span className="mr-2 text-sm text-gray-600">
-                  Olá, {user.name.split(' ')[0]}
-                </span>
+                <div className="flex items-center space-x-3">
+                  <span className="text-sm text-gray-600">
+                    Olá, {user.name.split(' ')[0]}
+                  </span>
+                </div>
                 <UserMenu />
               </>
             ) : (
@@ -104,13 +113,34 @@ export function Header() {
                   ) : isAuthenticated && user ? (
                     <>
                       <div className="rounded-md bg-gray-50 p-3">
-                        <p className="text-sm font-medium">{user.name}</p>
-                        <p className="text-xs text-gray-600">{user.email}</p>
-                        {user.role && (
-                          <p className="text-xs text-gray-500">
-                            {user.role.name}
-                          </p>
-                        )}
+                        <div className="flex items-center space-x-3">
+                          <div className="relative h-10 w-10 overflow-hidden rounded-full bg-gray-200">
+                            {user.path && getImageUrl(user.path) ? (
+                              <Image
+                                src={getImageUrl(user.path)!}
+                                alt={user.name || 'Foto do usuário'}
+                                fill
+                                className="object-cover"
+                                sizes="40px"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center">
+                                <User className="h-5 w-5 text-gray-500" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{user.name}</p>
+                            <p className="text-xs text-gray-600">
+                              {user.email}
+                            </p>
+                            {user.role && (
+                              <p className="text-xs text-gray-500">
+                                {user.role.name}
+                              </p>
+                            )}
+                          </div>
+                        </div>
                       </div>
                       <Button
                         variant="ghost"

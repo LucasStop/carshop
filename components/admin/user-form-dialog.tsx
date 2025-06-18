@@ -39,6 +39,7 @@ import {
 } from '@/services/admin';
 import { UtilsService } from '@/services/utils';
 import { useAdminLoading } from './admin-loading-provider';
+import { toastSuccess, toastError, toastInfo } from '@/hooks/use-toast';
 
 const userFormSchema = z
   .object({
@@ -197,21 +198,34 @@ export function UserFormDialog({
       });
     }
   }, [user, form]);
-
   const handleCepChange = async (cep: string) => {
     const cleanCep = cep.replace(/\D/g, '');
 
     if (cleanCep.length === 8) {
       setIsLoadingCep(true);
+
+      toastInfo('Buscando endereço...', `Consultando CEP ${cep}`);
+
       try {
         const addressData = await UtilsService.getAddressByCep(cleanCep);
         if (addressData) {
           form.setValue('address.address', addressData.address);
           form.setValue('address.city', addressData.city);
           form.setValue('address.state', addressData.state);
+
+          toastSuccess(
+            'Endereço encontrado!',
+            'Os campos foram preenchidos automaticamente.'
+          );
+        } else {
+          toastError('CEP não encontrado', 'Verifique se o CEP está correto.');
         }
       } catch (error) {
         console.error('Erro ao buscar CEP:', error);
+        toastError(
+          'Erro ao buscar CEP',
+          'Não foi possível consultar o endereço. Preencha manualmente.'
+        );
       } finally {
         setIsLoadingCep(false);
       }
@@ -243,8 +257,12 @@ export function UserFormDialog({
           (updateData as any).password_confirmation =
             data.password_confirmation;
         }
-
         await AdminService.updateUser(user.id, updateData);
+
+        toastSuccess(
+          'Usuário atualizado com sucesso!',
+          `Os dados de ${data.name} foram atualizados.`
+        );
       } else {
         // Criação
         const createData: CreateUserRequest = {
@@ -261,11 +279,21 @@ export function UserFormDialog({
         };
 
         await AdminService.createUser(createData);
+
+        toastSuccess(
+          'Usuário criado com sucesso!',
+          `${data.name} foi adicionado ao sistema.`
+        );
       }
 
       onSuccess();
     } catch (error: any) {
       console.error('Erro ao salvar usuário:', error);
+
+      toastError(
+        user ? 'Erro ao atualizar usuário' : 'Erro ao criar usuário',
+        'Verifique os dados e tente novamente.'
+      );
 
       // Tratar erros de validação da API
       if (error.response?.data?.errors) {

@@ -4,6 +4,7 @@ import { ApiService } from './api';
 export interface AdminUser {
   id: number;
   role_id: number;
+  path?: string;
   name: string;
   email: string;
   phone: string;
@@ -87,6 +88,7 @@ export interface AdminModel {
 export interface AdminCar {
   id: number;
   model_id: number;
+  path?: string;
   vin: string;
   color: string;
   manufacture_year: number;
@@ -98,7 +100,6 @@ export interface AdminCar {
   updated_at: string;
   deleted_at: string | null;
   model?: AdminModel;
-  images?: string[];
 }
 
 export interface AdminSale {
@@ -246,7 +247,7 @@ export interface UpdateModelRequest {
 export interface CreateSaleRequest {
   car_id: number;
   customer_user_id: number;
-  employee_user_id: number;
+  employee_user_id: number | null; // Pode ser null se não houver um funcionário associado
   sale_date: string;
   final_price: string;
   notes?: string;

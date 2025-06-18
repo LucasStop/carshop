@@ -35,6 +35,12 @@ import {
   getValidationMessage,
 } from '@/components/validation-indicator';
 import { AuthService, ApiError, UtilsService } from '@/services';
+import {
+  toastSuccess,
+  toastError,
+  toastLoading,
+  toastInfo,
+} from '@/hooks/use-toast';
 
 // Schema de validação simplificado com Yup
 const registerSchema = yup.object({
@@ -197,10 +203,15 @@ export function RegisterForm() {
       agreeToTerms: false,
     },
   });
-
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     setError('');
+
+    // Toast de carregamento
+    const loadingToast = toastLoading(
+      'Criando conta...',
+      'Aguarde enquanto processamos seus dados'
+    );
 
     try {
       const { agreeToTerms, ...submitData } = data;
@@ -210,30 +221,64 @@ export function RegisterForm() {
       const result = await AuthService.register(submitData);
       console.log('Registro bem-sucedido:', result);
 
-      window.location.href = '/login';
+      // Fechar toast de carregamento
+      loadingToast.dismiss();
+
+      // Toast de sucesso
+      toastSuccess(
+        'Conta criada com sucesso!',
+        'Sua conta foi criada. Você será redirecionado para fazer login.'
+      );
+
+      // Aguardar um pouco antes de redirecionar
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 2000);
     } catch (error) {
       console.error('Erro no registro:', error);
+
+      // Fechar toast de carregamento
+      loadingToast.dismiss();
+
       const apiError = error as ApiError;
-      setError(apiError.message || 'Erro ao criar conta. Tente novamente.');
+      const errorMessage =
+        apiError.message || 'Erro ao criar conta. Tente novamente.';
+
+      setError(errorMessage);
+      toastError('Erro ao criar conta', errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
-
   const handleCepChange = async (cep: string) => {
     const cleanCep = cep.replace(/\D/g, '');
 
     if (cleanCep.length === 8) {
       setIsLoadingCep(true);
+
+      // Toast informativo
+      toastInfo('Buscando endereço...', `Procurando dados para o CEP ${cep}`);
+
       try {
         const addressData = await UtilsService.getAddressByCep(cleanCep);
         if (addressData) {
           form.setValue('address.address', addressData.address);
           form.setValue('address.city', addressData.city);
           form.setValue('address.state', addressData.state);
+
+          toastSuccess(
+            'Endereço encontrado!',
+            'Os campos foram preenchidos automaticamente.'
+          );
+        } else {
+          toastError('CEP não encontrado', 'Verifique se o CEP está correto.');
         }
       } catch (error) {
         console.error('Erro ao buscar CEP:', error);
+        toastError(
+          'Erro ao buscar CEP',
+          'Não foi possível consultar o endereço. Preencha manualmente.'
+        );
       } finally {
         setIsLoadingCep(false);
       }

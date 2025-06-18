@@ -39,10 +39,14 @@ import {
   UpdateCarRequest,
 } from '@/services/admin';
 import { useAdminLoading } from './admin-loading-provider';
+import { toastSuccess, toastError } from '@/hooks/use-toast';
 
 const carFormSchema = z.object({
   model_id: z.number().min(1, 'Modelo é obrigatório'),
-  vin: z.string().min(17, 'VIN deve ter 17 caracteres').max(17, 'VIN deve ter 17 caracteres'),
+  vin: z
+    .string()
+    .min(17, 'VIN deve ter 17 caracteres')
+    .max(17, 'VIN deve ter 17 caracteres'),
   color: z.string().min(1, 'Cor é obrigatória'),
   manufacture_year: z
     .number()
@@ -163,7 +167,7 @@ export function CarFormDialog({
         status: car.status === 'sold' ? 'available' : car.status, // Não permitir criar como vendido
         inclusion_date: car.inclusion_date.split('T')[0],
       });
-      
+
       // Se temos o modelo, buscar a marca
       if (car.model?.brand_id) {
         setSelectedBrand(car.model.brand_id);
@@ -207,8 +211,12 @@ export function CarFormDialog({
           status: data.status,
           inclusion_date: data.inclusion_date,
         };
-
         await AdminService.updateCar(car.id, updateData);
+
+        toastSuccess(
+          'Veículo atualizado com sucesso!',
+          `${data.color} ${models.find(m => m.id === data.model_id)?.brand?.name || ''} ${models.find(m => m.id === data.model_id)?.name || ''} foi atualizado.`
+        );
       } else {
         // Criação
         const createData: CreateCarRequest = {
@@ -223,11 +231,21 @@ export function CarFormDialog({
         };
 
         await AdminService.createCar(createData);
+
+        toastSuccess(
+          'Veículo criado com sucesso!',
+          `${data.color} ${models.find(m => m.id === data.model_id)?.brand?.name || ''} ${models.find(m => m.id === data.model_id)?.name || ''} foi adicionado ao sistema.`
+        );
       }
 
       onSuccess();
     } catch (error: any) {
       console.error('Erro ao salvar veículo:', error);
+
+      toastError(
+        car ? 'Erro ao atualizar veículo' : 'Erro ao criar veículo',
+        'Verifique os dados e tente novamente.'
+      );
 
       // Tratar erros de validação da API
       if (error.response?.data?.errors) {
@@ -272,17 +290,28 @@ export function CarFormDialog({
                       <FormLabel>Marca</FormLabel>
                       <Select
                         value={selectedBrand ? selectedBrand.toString() : ''}
-                        onValueChange={(value) => handleBrandChange(parseInt(value))}
+                        onValueChange={value =>
+                          handleBrandChange(parseInt(value))
+                        }
                         disabled={isLoadingBrands}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder={isLoadingBrands ? 'Carregando...' : 'Selecione uma marca'} />
+                            <SelectValue
+                              placeholder={
+                                isLoadingBrands
+                                  ? 'Carregando...'
+                                  : 'Selecione uma marca'
+                              }
+                            />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {brands.map(brand => (
-                            <SelectItem key={brand.id} value={brand.id.toString()}>
+                            <SelectItem
+                              key={brand.id}
+                              value={brand.id.toString()}
+                            >
                               {brand.name}
                             </SelectItem>
                           ))}
@@ -301,23 +330,28 @@ export function CarFormDialog({
                       <FormLabel>Modelo</FormLabel>
                       <Select
                         value={field.value ? field.value.toString() : ''}
-                        onValueChange={(value) => field.onChange(parseInt(value))}
+                        onValueChange={value => field.onChange(parseInt(value))}
                         disabled={isLoadingModels || selectedBrand === 0}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder={
-                              selectedBrand === 0 
-                                ? 'Selecione uma marca primeiro'
-                                : isLoadingModels 
-                                  ? 'Carregando...' 
-                                  : 'Selecione um modelo'
-                            } />
+                            <SelectValue
+                              placeholder={
+                                selectedBrand === 0
+                                  ? 'Selecione uma marca primeiro'
+                                  : isLoadingModels
+                                    ? 'Carregando...'
+                                    : 'Selecione um modelo'
+                              }
+                            />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {models.map(model => (
-                            <SelectItem key={model.id} value={model.id.toString()}>
+                            <SelectItem
+                              key={model.id}
+                              value={model.id.toString()}
+                            >
                               {model.name}
                             </SelectItem>
                           ))}
@@ -340,7 +374,9 @@ export function CarFormDialog({
                         <Input
                           placeholder="Ex: VINVW001AAA12345"
                           {...field}
-                          onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                          onChange={e =>
+                            field.onChange(e.target.value.toUpperCase())
+                          }
                           maxLength={17}
                         />
                       </FormControl>
@@ -358,7 +394,10 @@ export function CarFormDialog({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Cor</FormLabel>
-                      <Select value={field.value} onValueChange={field.onChange}>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione uma cor" />
@@ -391,7 +430,9 @@ export function CarFormDialog({
                           min={1990}
                           max={new Date().getFullYear() + 1}
                           {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value))}
+                          onChange={e =>
+                            field.onChange(parseInt(e.target.value))
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -411,7 +452,9 @@ export function CarFormDialog({
                           min={0}
                           placeholder="Ex: 15000"
                           {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          onChange={e =>
+                            field.onChange(parseInt(e.target.value) || 0)
+                          }
                         />
                       </FormControl>
                       <FormDescription>
@@ -439,7 +482,7 @@ export function CarFormDialog({
                         <Input
                           placeholder="Ex: 180000"
                           {...field}
-                          onChange={(e) => {
+                          onChange={e => {
                             // Permitir apenas números
                             const value = e.target.value.replace(/\D/g, '');
                             field.onChange(value);
@@ -460,7 +503,10 @@ export function CarFormDialog({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status</FormLabel>
-                      <Select value={field.value} onValueChange={field.onChange}>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione o status" />
@@ -469,7 +515,9 @@ export function CarFormDialog({
                         <SelectContent>
                           <SelectItem value="available">Disponível</SelectItem>
                           <SelectItem value="reserved">Reservado</SelectItem>
-                          <SelectItem value="maintenance">Manutenção</SelectItem>
+                          <SelectItem value="maintenance">
+                            Manutenção
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -485,10 +533,7 @@ export function CarFormDialog({
                   <FormItem>
                     <FormLabel>Data de Inclusão</FormLabel>
                     <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                      />
+                      <Input type="date" {...field} />
                     </FormControl>
                     <FormDescription>
                       Data em que o veículo foi incluído no estoque

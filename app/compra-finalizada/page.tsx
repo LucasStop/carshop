@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,7 @@ interface PurchaseData {
     id: number;
     name: string;
     price: number;
-    image: string;
+    path: string;
     year: number;
     color: string;
     mileage: number;
@@ -43,7 +43,7 @@ interface PurchaseData {
   deliveryDate: string;
 }
 
-export default function PurchaseCompletePage() {
+function PurchaseCompleteContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [purchaseData, setPurchaseData] = useState<PurchaseData | null>(null);
@@ -66,7 +66,7 @@ export default function PurchaseCompletePage() {
             id: 1,
             name: 'BMW X7 M50i',
             price: 850000,
-            image: '/bmw-x7-2024.png',
+            path: '/bmw-x7-2024.png',
             year: 2024,
             color: 'Preto',
             mileage: 0,
@@ -112,6 +112,11 @@ export default function PurchaseCompletePage() {
     );
   }
 
+  const getImageUrl = (path: string | undefined) => {
+    if (!path) return null;
+    return `${process.env.NEXT_PUBLIC_IMAGE_URL}${path}`;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="container mx-auto max-w-4xl px-4">
@@ -127,7 +132,6 @@ export default function PurchaseCompletePage() {
             Parabéns! Sua compra foi processada e confirmada.
           </p>
         </div>
-
         {/* Informações do Pedido */}
         <Card className="mb-8">
           <CardHeader>
@@ -211,7 +215,6 @@ export default function PurchaseCompletePage() {
             </div>
           </CardContent>
         </Card>
-
         {/* Itens Comprados */}
         <Card className="mb-8">
           <CardHeader>
@@ -226,17 +229,17 @@ export default function PurchaseCompletePage() {
                 <div key={item.id} className="flex gap-4 rounded-lg border p-4">
                   <div className="relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-md">
                     <Image
-                      src={item.image}
+                      src={getImageUrl(item.path) || '/placeholder.svg'}
                       alt={item.name}
                       fill
-                      className="object-cover"
+                      className="rounded object-cover"
                     />
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-900">{item.name}</h3>
                     <p className="text-sm text-gray-600">
                       {item.year} • {item.color} •{' '}
-                      {item.mileage.toLocaleString()} km
+                      {item.mileage?.toLocaleString()} km
                     </p>
                     <p className="mt-2 text-lg font-semibold text-gray-900">
                       R${' '}
@@ -254,7 +257,6 @@ export default function PurchaseCompletePage() {
             </div>
           </CardContent>
         </Card>
-
         {/* Próximos Passos */}
         <Card className="mb-8">
           <CardHeader>
@@ -306,7 +308,6 @@ export default function PurchaseCompletePage() {
             </div>
           </CardContent>
         </Card>
-
         {/* Contato e Suporte */}
         <Card className="mb-8">
           <CardHeader>
@@ -333,7 +334,6 @@ export default function PurchaseCompletePage() {
             </div>
           </CardContent>
         </Card>
-
         {/* Ações */}
         <div className="flex flex-col justify-center gap-4 sm:flex-row">
           <Button variant="outline" asChild className="flex items-center gap-2">
@@ -360,7 +360,6 @@ export default function PurchaseCompletePage() {
             </Link>
           </Button>
         </div>
-
         {/* Nota Importante */}
         <div className="mt-8 rounded-lg border border-blue-200 bg-blue-50 p-4">
           <p className="text-sm text-blue-800">
@@ -368,8 +367,27 @@ export default function PurchaseCompletePage() {
             {purchaseData.orderId} para futuras consultas. Em caso de dúvidas,
             nossa equipe está disponível para ajudá-lo.
           </p>
-        </div>
+        </div>{' '}
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-black" />
+        <p className="text-gray-600">Carregando...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function PurchaseCompletePage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <PurchaseCompleteContent />
+    </Suspense>
   );
 }

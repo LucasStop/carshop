@@ -24,17 +24,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { useToast } from '@/hooks/use-toast';
 import { CalendarIcon, Car, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toastSuccess, toastError, toastLoading } from '@/hooks/use-toast';
 
 interface TestDriveBookingProps {
   trigger?: React.ReactNode;
 }
 
 export function TestDriveBooking({ trigger }: TestDriveBookingProps) {
-  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [date, setDate] = useState<Date>();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -67,7 +66,6 @@ export function TestDriveBooking({ trigger }: TestDriveBookingProps) {
     'Volvo XC90',
     'Lexus LS',
   ];
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -78,24 +76,32 @@ export function TestDriveBooking({ trigger }: TestDriveBookingProps) {
       !date ||
       !formData.preferredTime
     ) {
-      toast({
-        title: 'Campos obrigatórios',
-        description: 'Por favor, preencha todos os campos obrigatórios.',
-        variant: 'destructive',
-      });
+      toastError(
+        'Campos obrigatórios',
+        'Por favor, preencha todos os campos obrigatórios.'
+      );
       return;
     }
 
     setIsSubmitting(true);
 
+    // Toast de carregamento
+    const loadingToast = toastLoading(
+      'Agendando test drive...',
+      'Processando sua solicitação'
+    );
+
     try {
       // Simular agendamento
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      toast({
-        title: 'Test Drive Agendado!',
-        description: `Seu test drive foi agendado para ${format(date, 'dd/MM/yyyy', { locale: ptBR })} às ${formData.preferredTime}. Entraremos em contato para confirmar.`,
-      });
+      // Fechar toast de carregamento
+      loadingToast.dismiss();
+
+      toastSuccess(
+        'Test Drive Agendado com Sucesso!',
+        `Seu test drive foi agendado para ${format(date, 'dd/MM/yyyy', { locale: ptBR })} às ${formData.preferredTime}. Entraremos em contato para confirmar.`
+      );
 
       setFormData({
         name: '',
@@ -108,12 +114,13 @@ export function TestDriveBooking({ trigger }: TestDriveBookingProps) {
       setDate(undefined);
       setIsOpen(false);
     } catch (error) {
-      toast({
-        title: 'Erro ao agendar',
-        description:
-          'Ocorreu um erro. Tente novamente ou entre em contato por telefone.',
-        variant: 'destructive',
-      });
+      // Fechar toast de carregamento
+      loadingToast.dismiss();
+
+      toastError(
+        'Erro ao agendar test drive',
+        'Ocorreu um erro. Tente novamente ou entre em contato por telefone.'
+      );
     } finally {
       setIsSubmitting(false);
     }

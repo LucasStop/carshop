@@ -12,15 +12,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
 import { MessageCircle, Phone, Mail, X } from 'lucide-react';
+import { toastSuccess, toastError, toastLoading } from '@/hooks/use-toast';
 
 interface QuickContactProps {
   trigger?: React.ReactNode;
 }
 
 export function QuickContact({ trigger }: QuickContactProps) {
-  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -29,38 +28,47 @@ export function QuickContact({ trigger }: QuickContactProps) {
     phone: '',
     message: '',
   });
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.name || !formData.email || !formData.message) {
-      toast({
-        title: 'Campos obrigatórios',
-        description: 'Por favor, preencha nome, email e mensagem.',
-        variant: 'destructive',
-      });
+      toastError(
+        'Campos obrigatórios',
+        'Por favor, preencha nome, email e mensagem.'
+      );
       return;
     }
 
     setIsSubmitting(true);
 
+    // Toast de carregamento
+    const loadingToast = toastLoading(
+      'Enviando mensagem...',
+      'Aguarde enquanto processamos seu contato'
+    );
+
     try {
       // Simular envio
       await new Promise(resolve => setTimeout(resolve, 1500));
 
-      toast({
-        title: 'Mensagem enviada!',
-        description: 'Entraremos em contato em breve.',
-      });
+      // Fechar toast de carregamento
+      loadingToast.dismiss();
+
+      toastSuccess(
+        'Mensagem enviada com sucesso!',
+        'Recebemos seu contato e responderemos em breve.'
+      );
 
       setFormData({ name: '', email: '', phone: '', message: '' });
       setIsOpen(false);
     } catch (error) {
-      toast({
-        title: 'Erro ao enviar',
-        description: 'Tente novamente ou entre em contato por telefone.',
-        variant: 'destructive',
-      });
+      // Fechar toast de carregamento
+      loadingToast.dismiss();
+
+      toastError(
+        'Erro ao enviar mensagem',
+        'Tente novamente ou entre em contato por telefone.'
+      );
     } finally {
       setIsSubmitting(false);
     }

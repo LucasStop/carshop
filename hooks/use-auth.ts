@@ -6,6 +6,7 @@ import { AuthService } from '@/services';
 export interface User {
   id: number;
   role_id: number;
+  path?: string;
   name: string;
   email: string;
   phone: string;

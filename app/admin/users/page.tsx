@@ -58,6 +58,7 @@ import { UserFormDialog } from '@/components/admin/user-form-dialog';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useAdminLoading } from '@/components/admin/admin-loading-provider';
 import { format } from 'date-fns';
+import { toastSuccess, toastError } from '@/hooks/use-toast';
 import { ptBR } from 'date-fns/locale';
 
 export default function UsersPage() {
@@ -161,7 +162,6 @@ export default function UsersPage() {
         return slug;
     }
   };
-
   const handleDeleteUser = async () => {
     if (!userToDelete || !canManageUsers()) return;
 
@@ -170,10 +170,21 @@ export default function UsersPage() {
       setLoadingMessage('Excluindo usuário...');
 
       await AdminService.deleteUser(userToDelete.id);
+
+      toastSuccess(
+        'Usuário excluído com sucesso!',
+        `${userToDelete.name} foi removido do sistema.`
+      );
+
       await loadUsers();
       setUserToDelete(null);
     } catch (error) {
       console.error('Erro ao excluir usuário:', error);
+
+      toastError(
+        'Erro ao excluir usuário',
+        'Não foi possível remover o usuário. Tente novamente.'
+      );
     } finally {
       setGlobalLoading(false);
     }
@@ -248,6 +259,11 @@ export default function UsersPage() {
       </div>
     );
   }
+
+  const getImageUrl = (path: string | undefined) => {
+    if (!path) return null;
+    return `${process.env.NEXT_PUBLIC_IMAGE_URL}${path}`;
+  };
 
   return (
     <div className="space-y-6">
@@ -332,7 +348,11 @@ export default function UsersPage() {
                   <TableCell>
                     <div className="flex items-center space-x-3">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src="/placeholder-user.jpg" />
+                        <AvatarImage
+                          src={
+                            getImageUrl(user.path) || '/placeholder-user.jpg'
+                          }
+                        />
                         <AvatarFallback className="text-xs">
                           {getInitials(user.name)}
                         </AvatarFallback>

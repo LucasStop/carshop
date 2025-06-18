@@ -41,8 +41,12 @@ export class ApiService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+
+        // Usar função para obter mensagem de erro amigável
+        const message = this.getErrorMessage(errorData, response.status);
+
         const apiError: ApiError = {
-          message: errorData.message || 'Erro na requisição',
+          message,
           errors: errorData.errors,
           status: response.status,
         };
@@ -119,6 +123,68 @@ export class ApiService {
     } else {
       console.warn('localStorage não disponível (SSR)');
     }
+  }
+
+  // Função para mapear mensagens de erro mais amigáveis
+  private static getErrorMessage(errorData: any, status: number): string {
+    // Mensagens específicas para login
+    if (status === 401) {
+      const message = errorData.message?.toLowerCase() || '';
+
+      if (message.includes('password') || message.includes('senha')) {
+        return 'Senha incorreta. Verifique sua senha e tente novamente.';
+      }
+      if (
+        message.includes('email') ||
+        message.includes('e-mail') ||
+        message.includes('user')
+      ) {
+        return 'Email não encontrado. Verifique o email digitado.';
+      }
+      if (message.includes('credentials') || message.includes('credenciais')) {
+        return 'Email ou senha incorretos. Verifique suas credenciais.';
+      }
+      if (
+        message.includes('inactive') ||
+        message.includes('inativo') ||
+        message.includes('disabled')
+      ) {
+        return 'Conta inativa. Entre em contato com o suporte.';
+      }
+      if (message.includes('blocked') || message.includes('bloqueado')) {
+        return 'Conta bloqueada. Entre em contato com o suporte.';
+      }
+
+      return 'Email ou senha incorretos. Verifique suas credenciais.';
+    }
+
+    // Mensagens específicas para validação
+    if (status === 422) {
+      if (errorData.errors) {
+        const firstError = Object.values(errorData.errors)[0];
+        if (Array.isArray(firstError) && firstError.length > 0) {
+          return firstError[0];
+        }
+      }
+      return (
+        errorData.message || 'Dados inválidos. Verifique os campos preenchidos.'
+      );
+    }
+
+    // Outras mensagens de erro
+    if (status === 429) {
+      return 'Muitas tentativas de login. Aguarde alguns minutos antes de tentar novamente.';
+    }
+
+    if (status === 403) {
+      return 'Acesso negado. Você não tem permissão para acessar esta área.';
+    }
+
+    if (status >= 500) {
+      return 'Erro interno do servidor. Tente novamente em alguns minutos.';
+    }
+
+    return errorData.message || 'Erro na requisição';
   }
 
   static getAuthToken(): string | null {
